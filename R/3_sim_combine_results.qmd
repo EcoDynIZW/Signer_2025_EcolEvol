@@ -1,0 +1,70 @@
+---
+title: "The 4<sup>th</sup> Dimension of Movement"
+subtitle: "Movement Paths (simulated tracks)"
+author:
+  - name: Johannes Signer
+    email: jsigner@uni-goettingen.de
+  - name: Cédric Scherer
+    email: viz@cedricscherer.com
+  - name: Stephanie Kramer-Schadt
+    email: kramer@izw-berlin.de
+date: "`r Sys.Date()`"
+format:
+    html: 
+      theme: flatly
+      embed-resources: true
+      toc: true
+      backgroundcolor: '#ffffff'
+execute:
+  freeze: auto
+  echo: true
+  warning: false
+  message: false
+  cache: true
+editor: source
+editor_options:
+   chunk_output_type: inline
+---
+
+## Preparation
+
+```{r}
+#| label: setup
+#| cache: false
+## packages
+library(readr)
+library(dplyr)
+library(stringr)
+library(purrr)
+library(here)
+
+## path to output
+dir_out <- here("output", "simulated")
+```
+
+
+## Combine Results
+
+```{r}
+#| label: combine-data
+dat <- 
+  list.files(paste0(dir_out, "/single_runs"), full.names = TRUE) |>
+  map(~ read_rds(.x) |> mutate(run_id = .x)) |>
+  bind_rows()
+
+dat <- mutate(dat, run_id = str_extract(run_id, "\\d{6}") |> as.numeric())
+
+# save results
+write_rds(dat, paste0(dir_out, "/results_combined.rds"))
+```
+
+*** 
+  
+<details><summary>Session Info</summary>
+  
+```{r sessionInfo}
+git2r::repository()
+devtools::session_info()
+```
+
+</details>

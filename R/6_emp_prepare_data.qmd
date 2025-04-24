@@ -1,0 +1,148 @@
+---
+title: "The 4<sup>th</sup> Dimension of Movement"
+subtitle: "Process Movement Data (empirical tracks)"
+author:
+  - name: Johannes Signer
+    email: jsigner@uni-goettingen.de
+  - name: Cédric Scherer
+    email: viz@cedricscherer.com
+  - name: Stephanie Kramer-Schadt
+    email: kramer@izw-berlin.de
+date: "`r Sys.Date()`"
+format:
+    html: 
+      theme: flatly
+      embed-resources: true
+      toc: true
+      backgroundcolor: '#ffffff'
+knitr:
+  opts_chunk:    
+    dev: "ragg_png"
+    retina: 1
+    dpi: 300
+execute:
+  freeze: auto
+  echo: true
+  warning: false
+  message: false
+  cache: true
+  fig-width: 12
+  fig-height: 8
+editor: source
+editor_options:
+   chunk_output_type: inline
+---
+
+## Preparation
+
+```{r}
+#| label: setup
+#| cache: false
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(sf)
+library(terra)
+library(here)
+
+## define proj string
+projection <- "+proj=longlat +datum=WGS84"
+
+## path to processed data
+dir_proc <- here("output", "empirical", "data_proc")
+```
+
+
+## Clean Movement Data
+
+```{r}
+#| label: combine-filled-data
+sf_boars <- 
+  read_rds(paste0(dir_proc, "/boars_resampled.rds")) |> 
+  mutate(id = str_replace(id, "IZW_", "")) |>
+  ## turn into sf object to change projection
+  st_as_sf(coords = c("x", "y"), crs = projection) |>
+  st_transform(crs = 3035) 
+  
+## turn into data frame again
+df_boars <-
+  sf_boars |>
+  mutate(
+    id = factor(id, levels = sort(as.numeric(unique(sf_boars$id)))),
+    x = st_coordinates(sf_boars)[,1],
+    y = st_coordinates(sf_boars)[,2]
+  ) |>
+  as_tibble() |>
+  dplyr::select(id, res, time, x, y)
+
+rds_boars <- paste0(dir_proc, "/boars_resampled_3035.rds")
+if (!file.exists(rds_boars)) write_rds(df_boars, rds_boars)
+```
+
+## Clean Environmental Variables
+
+```{r}
+#| label: import-gis-data
+tif <- paste0(dir_proc, "/env_vars_100m.tif")
+
+if(!file.exists(tif)) {
+  
+  ## define path
+  gis_path <- here("data", "empirical", "environmental_variables")
+  
+  extent <- ext(st_buffer(sf_boars, 10000))
+  
+  ## Distance to water bodies
+  dtw_raw <- rast(paste0(gis_path, "/dist_water_raster.tif"))
+  names(dtw_raw) <- "dtw"
+  
+  ## Percentage of green areas 
+  tcd_raw <- rast(paste0(gis_path, "/tree_cover_density_copernicus_2015_100m_03035_berlin_brandenburg.tif"))
+  names(tcd_raw) <- "tcd"
+  
+  ## Imperviousness
+  imp_raw <- rast(paste0(gis_path, "/imperviousness_copernicus_2015_100m_03035_berlin_brandenburg.tif")) 
+  names(imp_raw) <- "imp"
+  
+  ## crop to same extent
+  dtw <- crop(dtw_raw, extent, snap = "out")
+  tcd <- crop(tcd_raw, dtw, snap = "out")
+  imp <- crop(imp_raw, dtw, snap = "out") 
+  
+  ## adjust grid to match with other rasters
+  imp_adj <- terra::resample(imp, dtw, method = "average")
+  tcd_adj <- terra::resample(tcd, dtw, method = "average")
+  
+  ## create habitat raster
+  rc <- function(x) {
+    ## tree cover above 75% is classified as "forest" (1),
+    ## everything else as "non-forest" (0)
+    ifelse(x <= 75, 0, 1)
+  }
+  hab <- lapp(tcd_adj, fun = rc)
+  names(hab) <- "hab"
+  
+  ## standardize variables
+  dtw[] <- (dtw[] - mean(dtw[], na.rm = TRUE)) / sd(dtw[], na.rm = TRUE) 
+  imp_adj[] <- (imp_adj[] - mean(imp_adj[], na.rm = TRUE)) / sd(imp_adj[], na.rm = TRUE)
+  
+  ## as raster stack
+  env_vars <- c(dtw, imp_adj, hab)
+  
+  ## save landscapes
+  writeRaster(x = env_vars, filename = tif, overwrite = TRUE)
+} 
+```
+
+*** 
+
+<details><summary>Session Info</summary>
+
+```{r sessionInfo}
+# git2r::repository() ## remove information to ensure double-blind review
+sessionInfo()
+```
+
+</details>

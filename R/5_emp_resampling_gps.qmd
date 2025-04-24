@@ -1,0 +1,169 @@
+---
+title: "The 4<sup>th</sup> Dimension of Movement"
+subtitle: "Resampling Movement Data (empirical tracks)"
+author:
+  - name: Johannes Signer
+    email: jsigner@uni-goettingen.de
+  - name: Cédric Scherer
+    email: viz@cedricscherer.com
+  - name: Stephanie Kramer-Schadt
+    email: kramer@izw-berlin.de
+date: "`r Sys.Date()`"
+format:
+    html: 
+      theme: flatly
+      embed-resources: true
+      toc: true
+      backgroundcolor: '#ffffff'
+knitr:
+  opts_chunk:    
+    dev: "ragg_png"
+    retina: 1
+    dpi: 300
+execute:
+  freeze: auto
+  echo: true
+  warning: false
+  message: false
+  cache: true
+  fig-width: 12
+  fig-height: 8
+editor: source
+editor_options:
+   chunk_output_type: inline
+---
+
+```{r}
+#| label: setup
+library(readr) 
+library(dplyr) 
+library(tidyr) 
+library(ggplot2)
+library(lubridate)
+library(purrr)
+library(sf) 
+library(move)
+library(moveVis)
+library(here)
+
+## plot theme
+theme_set(d6::theme_d6(base_family = "PT Sans"))
+theme_update(
+  panel.grid.major.x = element_blank(),
+  panel.grid.major.y = element_line(color = "#fefefe", linewidth = .5),
+  panel.grid.minor = element_blank(),
+  panel.background = element_rect(fill = "grey95", color = "grey95")
+)
+
+## path to movement data
+dir_geo <- here("data", "empirical", "movement_boars_gps")
+
+## path + folder for processed data
+dir_proc <- here("output", "empirical", "data_proc")
+if (!dir.exists(dir_proc)) dir.create(dir_proc, recursive = TRUE)
+```
+
+
+```{r data-preparation}
+gps_boars_raw <- read_sf(paste0(dir_geo, "/2013_sus-scrofa_de_telemetry_stillfried.gpkg"))
+
+gps_boars <- gps_boars_raw |> 
+  mutate(
+    timestamp = as_datetime(timestamp),
+    date = as_date(timestamp),
+    yday = yday(timestamp),
+    week = week(timestamp),
+    month = month(timestamp),
+    year = factor(year(timestamp)),
+    long = st_coordinates(gps_boars_raw)[,1],
+    lat = st_coordinates(gps_boars_raw)[,2]
+  ) |> 
+  arrange(tag.local.identifier, timestamp) |>
+  group_by(tag.local.identifier) |> 
+  mutate(
+    diff = timestamp - lag(timestamp),
+    ## adjust timestamp to 'every 30 minutes'
+    time_clean = round_date(timestamp, "30 minutes"),
+    diff_clean = time_clean - lag(time_clean)
+  ) |> 
+  ungroup() |> 
+  ## remove timestamps that are too close
+  filter(diff_clean != 0) 
+```
+
+```{r}
+#| label: data-resampling
+## function to resample movement data per id
+aggregate_id_res <- function(id, resolution) {
+  
+  df <- gps_boars |> 
+    as.data.frame() |> 
+    filter(tag.local.identifier == id) |> 
+    df2move(
+      proj = "+init=epsg:25833 +proj=longlat +zone=33 +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0", 
+      x = "long", 
+      y = "lat", 
+      time = "timestamp"
+    ) |> 
+    align_move(res = resolution, unit = "mins") |> 
+    as_tibble() |> 
+    dplyr::select(x, y, time)
+
+  write_csv(df, paste0(dir_proc, "/boars_resampled_single", id, "_res", resolution, ".csv"))
+}
+
+
+## resample data
+rds_file <- paste0(dir_proc, "/boars_resampled.rds")
+
+if(!file.exists(rds_file)) {
+  
+  path_single <- paste0(dir_proc, "/boars_resampled_single")
+  if (!dir.exists(path_single)) dir.create(path_single, showWarnings = TRUE, recursive = TRUE)
+  
+  res <- c(30, 60, 180, 360, 720, 1440)
+  ids <- unique(gps_boars$tag.local.identifier)
+  
+  res_map <- rep(res, each = length(ids))
+  ids_map <- rep(ids, times = length(res))
+  
+  gps_boars_resampled_all <- 
+    map2_dfr(ids_map, res_map, 
+             ~aggregate_id_res(id = .x, resolution = .y) |> 
+                mutate(id = .x, res = .y))
+  
+  
+  ## only keep animals with 150+ locations with coarsest resolution
+  gps_boars_resampled <-
+    gps_boars_resampled_all |> 
+    group_by(id) |> 
+    add_count(res) |> 
+    filter(min(n) >= 150) |> 
+    ungroup() |> 
+    dplyr::select(-n)
+  
+  ## save resampled data
+  write_rds(gps_boars_resampled, rds_file)
+} else {
+  gps_boars_resampled <- read_rds(rds_file)
+}
+
+## inspect resampled data
+ggplot(gps_boars_resampled, aes(x = factor(res), fill = factor(year(time)))) +
+  geom_bar() +
+  facet_wrap(~id, ncol = 4) +
+  scale_fill_brewer(palette = "Dark2", name = NULL) +
+  labs(x = "Resolution (minutes)", y = "Number of observations")
+```
+
+***
+
+<details><summary>Session Info</summary>
+
+```{r sessionInfo}
+git2r::repository()
+devtools::session_info()
+```
+
+</details>
+

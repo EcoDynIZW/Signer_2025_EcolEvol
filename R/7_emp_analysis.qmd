@@ -1,0 +1,156 @@
+---
+title: "The 4<sup>th</sup> Dimension of Movement"
+subtitle: "Analysis (empirical tracks)"
+author:
+  - name: Johannes Signer
+    email: jsigner@uni-goettingen.de
+  - name: Cédric Scherer
+    email: viz@cedricscherer.com
+  - name: Stephanie Kramer-Schadt
+    email: kramer@izw-berlin.de
+date: "`r Sys.Date()`"
+format:
+    html: 
+      theme: flatly
+      embed-resources: true
+      toc: true
+      backgroundcolor: '#ffffff'
+knitr:
+  opts_chunk:    
+    dev: "ragg_png"
+    retina: 1
+    dpi: 300
+execute:
+  freeze: auto
+  echo: true
+  warning: false
+  message: false
+  cache: true
+  fig-width: 7.8
+  fig-height: 7.8
+editor: source
+editor_options:
+   chunk_output_type: inline
+---
+
+## Preparation
+
+```{r}
+#| label: setup
+#| cache: false
+## packages
+library(readr)
+library(dplyr)
+library(tidyr)
+library(forcats)
+library(raster)
+library(lubridate)
+library(move)
+library(amt)
+library(broom)
+library(here)
+library(glue)
+library(ctmm)
+library(parallel)
+
+## path to empirical data
+dir_emp <- here("output", "empirical", "data_proc")
+
+## path + folder for results
+dir_res <- here("output", "empirical", "results")
+if (!dir.exists(dir_res)) dir.create(dir_lscps, recursive = TRUE)
+```
+
+
+### Import Data
+
+```{r}
+## Read landscapes (RasterStack)
+env_vars <- terra::rast(paste0(dir_emp, "/env_vars_100m.tif"))
+
+## Read locations for all wild boars and different resolutions
+dat <-
+  read_rds(paste0(dir_emp, "/boars_resampled_3035.rds")) |>
+  dplyr::select(id, res, x, y, t = time) |>
+  group_by(id) |>
+  ungroup() |>
+  nest(data = c(x, y, t))
+
+# RSF
+if (!file.exists(paste0(dir_res, "/rsf.rds"))) {
+  dat.rsf <- dat |> mutate(fits = map(data, ~ {
+    x <- .x |> make_track(x, y, t) |>
+      random_points(n = nrow(.x) * 20) |> extract_covariates(env_vars)
+    m1 <- glm(case_ ~ dtw + imp + hab, family = binomial(), data = x)
+    tidy(m1, conf.int = TRUE) |>
+      filter(term != "(Intercept)") |>
+      dplyr::select(term, estimate, low = conf.low, high = conf.high) |>
+      mutate(method = "rsf")
+  }))
+
+  write_rds(dat.rsf |> dplyr::select(-data), paste0(dir_res, "/rsf.rds"))
+}
+
+
+## SSF
+if (!file.exists(paste0(dir_res, "/ssf.rds"))) {
+  dat.ssf <- dat |> mutate(fits = map(data, ~ {
+    x <- .x |> make_track(x, y, t) |>
+      steps() |> random_steps(n_control = 20) |> extract_covariates(env_vars)
+    m1 <- fit_clogit(x, case_ ~ dtw + imp + hab + sl_ + log(sl_) + cos(ta_) + strata(step_id_))
+    tidy(m1$model, conf.int = TRUE) |>
+      dplyr::select(term, estimate, low = conf.low, high = conf.high) |>
+      mutate(method = "ssf")
+  }))
+
+  write_rds(dat.ssf |> dplyr::select(-data), paste0(dir_res, "/ssf.rds"))
+}
+
+# wRSF
+if (!file.exists(paste0(dir_res, "/wrsf/inst_", nrow(dat), ".rds"))) {
+  dat <- dat |> mutate(
+    ctmm = mclapply(data, function(x) {
+  
+      t1 <- x |> make_track(x, y, t, crs = 3035) |> amt::as_telemetry()
+      SVF <- variogram(t1)
+      GUESS <- ctmm.guess(t1, variogram = SVF, interactive = FALSE)
+  
+      # Select the best model
+      FIT <- ctmm.select(t1, GUESS, trace = 0)
+      FIT
+    }, mc.cores = 5))
+  
+  dat <- dat |> mutate(telemetry = map(data, ~ {
+    .x |> make_track(x, y, t, crs = 3035) |> amt::as_telemetry()
+  }))
+  dat <- dat |> mutate(akde = map2(ctmm, telemetry, ~ akde(.y, .x, weights = TRUE)))
+  
+  write_rds(dat, paste0(dir_res, "/data_emp_wrsf.rds"))
+
+  r.list <- as.list(env_vars)
+  r.list <- lapply(r.list, raster)
+  names(r.list) <- c("dist_water", "imperviousness", "habitat")
+  
+  for (i in 1:nrow(dat)) {
+    print(i)
+    wRSF <- ctmm::rsf.fit(dat$telemetry[[i]], UD = dat$akde[[i]], R = r.list, error = 0.1)
+    r_wrsf <- summary(wRSF)$CI[1:length(r.list), , drop = FALSE]
+    r_wrsf <- r_wrsf |> as_tibble() |> mutate(term = rownames(r_wrsf)) |>
+      dplyr::select(term, estimate = est, low, high) |>
+      mutate(term = map_chr(strsplit(term, " "), 1), method = "wrsf")
+    
+    write_rds(r_wrsf, paste0(dir_res, "/wrsf/inst_", i, ".rds"))
+  }
+}
+```
+
+*** 
+  
+<details><summary>Session Info</summary>
+  
+```{r sessionInfo}
+git2r::repository()
+devtools::session_info()
+```
+
+</details>
