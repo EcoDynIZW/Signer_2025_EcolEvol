@@ -1,6 +1,6 @@
 # Signer et al. 
 
-> " by Johannes Signer, **Cédric Scherer**, **Viktoriia Radchuk**, **Carolin Scholz**, Florian Jeltsch & **Stephanie Kramer‐Schadt** (accepted) The 4th dimension in animal movement: The effect of temporal resolution and landscape configuration in habitat selection analyses. *4 of 15
+> "The 4th dimension in animal movement: The effect of temporal resolution and landscape configuration in habitat selection analyses" by Johannes Signer, **Cédric Scherer**, **Viktoriia Radchuk**, **Carolin Scholz**, Florian Jeltsch & **Stephanie Kramer‐Schadt** (accepted) The 4th dimension in animal movement: The effect of temporal resolution and landscape configuration in habitat selection analyses. *4 of 15
 Ecology and Evolution*
 
 Understanding how animals use their habitat is essential to understand their biology and support conservation efforts. Technological advances in tracking technologies allow us to follow animals at increasingly fine temporal resolutions. Yet, how tracking devices' sampling intervals impact results remains unclear, as well as which method to use.  
