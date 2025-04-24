@@ -1,7 +1,6 @@
 # Signer et al. 
 
-> "The 4th dimension in animal movement: The effect of temporal resolution and landscape configuration in habitat selection analyses" by Johannes Signer, **Cédric Scherer**, **Viktoriia Radchuk**, **Carolin Scholz**, Florian Jeltsch & **Stephanie Kramer‐Schadt** (accepted) The 4th dimension in animal movement: The effect of temporal resolution and landscape configuration in habitat selection analyses. *4 of 15
-Ecology and Evolution*
+> "The 4th dimension in animal movement: The effect of temporal resolution and landscape configuration in habitat selection analyses" by Johannes Signer, **Cédric Scherer**, **Viktoriia Radchuk**, **Carolin Scholz**, Florian Jeltsch & **Stephanie Kramer‐Schadt** (accepted) *Ecology and Evolution*
 
 1. Understanding how animals use their habitat is essential to understand their biology and support conservation efforts. Technological advances in tracking technologies allow us to follow animals at increasingly fine temporal resolutions. Yet, how tracking devices' sampling intervals impact results remains unclear, as well as which method to use.  
 2. Using simulations and empirical data from wild boars tracked in Germany, we systematically examine how temporal resolution of movement data in interaction with spatial autocorrelation of the landscape affects the outcomes of two common techniques for analyzing habitat selection: Resource Selection Analysis (RSA) and an autocorrelation-informed weighted derivate (wRSA) as well as integrated Step Selection Analysis (iSSA). Each method differs in the definition of “available” locations (RSA) and implementation of the movement model during parameter estimation (iSSA). 
