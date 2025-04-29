@@ -637,9 +637,9 @@ fig5 +
 *** 
   
 <details><summary>Session Info</summary>
-  
-```{r sessionInfo}
-git2r::repository()
+
+```{r}
+#| label: session-info
 devtools::session_info()
 ```
 

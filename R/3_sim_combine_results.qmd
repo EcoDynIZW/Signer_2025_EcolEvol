@@ -61,9 +61,9 @@ write_rds(dat, paste0(dir_out, "/results_combined.rds"))
 *** 
   
 <details><summary>Session Info</summary>
-  
-```{r sessionInfo}
-git2r::repository()
+
+```{r}
+#| label: session-info
 devtools::session_info()
 ```
 
