@@ -1,6 +1,6 @@
 ---
-title: "The 4<sup>th</sup> Dimension of Movement"
-subtitle: "Landscapes (simulated tracks)"
+title: "The 4<sup>th</sup> Dimension in Animal Movement"
+subtitle: "Simulation Study: Landscapes"
 author:
   - name: Johannes Signer
     email: jsigner@uni-goettingen.de

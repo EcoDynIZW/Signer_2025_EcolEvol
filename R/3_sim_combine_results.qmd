@@ -1,6 +1,6 @@
 ---
-title: "The 4<sup>th</sup> Dimension of Movement"
-subtitle: "Movement Paths (simulated tracks)"
+title: "The 4<sup>th</sup> Dimension in Animal Movement"
+subtitle: "Simulation Study: Combine Results Across Models"
 author:
   - name: Johannes Signer
     email: jsigner@uni-goettingen.de

@@ -1,6 +1,6 @@
 ---
-title: "The 4<sup>th</sup> Dimension of Movement"
-subtitle: "Manuscript Figures (simulated tracks)"
+title: "The 4<sup>th</sup> Dimension in Animal Movement"
+subtitle: "Simulation Study: Data Visualizations"
 author:
   - name: Johannes Signer
     email: jsigner@uni-goettingen.de
@@ -28,6 +28,7 @@ execute:
   cache: true
   fig-width: 12
   fig-height: 7.8
+  fig-cap: ""
 editor: source
 editor_options:
    chunk_output_type: inline
@@ -293,7 +294,7 @@ maps_mix <-
   plot_layout(guides = "collect", widths = c(1, .1, 1, .1, 1, .1, 1, .1, 1), nrow = 1) +
   plot_annotation(title = "**Combined variables**", 
                   theme = theme(legend.justification = "left", 
-                                legend.box.margin = margin(0, 1, -5, 1),
+                                legend.box.margin = margin(0, 1, -5, 10),
                                 plot.title = element_markdown(face = "plain", hjust = 0),
                                 plot.title.position = "plot"))
 
@@ -578,7 +579,8 @@ dat_fig5 <-
     lscp_num = case_when(lscp_num >= 6 ~ lscp_num + .6, lscp_num < 3 ~ lscp_num - .6, TRUE ~ lscp_num)
   )
 
-ggplot(dat_fig5, aes(x = factor(by), y = lscp_num, fill = mean)) + 
+fig5 <- 
+  ggplot(dat_fig5, aes(x = factor(by), y = lscp_num, fill = mean)) + 
   geom_point(
     aes(size = 100),
     fill = "grey94", shape = 21, color = "transparent"
@@ -588,11 +590,6 @@ ggplot(dat_fig5, aes(x = factor(by), y = lscp_num, fill = mean)) +
     aes(size = p.sig * 100),
     shape = 21, color = "transparent"
   ) +
-  # geom_text(
-  #   #aes(label = sprintf("%1.2f", p.sig)), 
-  #   aes(label = round(p.sig * 100), color = (mean < -6) | (mean > 5 & p.sig > .05)), 
-  #   family = "PT Mono", size = 2.5, fontface = "bold"
-  # ) +
   facet_nested(
     ~ method + term,
     axes = "margins", remove_labels = "x"
@@ -618,7 +615,22 @@ ggplot(dat_fig5, aes(x = factor(by), y = lscp_num, fill = mean)) +
     axis.text.y = element_markdown(hjust = 0, size = rel(1.1), family = "PT Sans Narrow")
   )
 
+fig5
+
 ggsave(paste0(dir_plots, "/_raw/5_sim_est_mean_sign_blank.png"), width = 12, height = 7.5, dpi = 600, bg = "white")
+```
+
+#### Variant with Explicit Labels
+
+```{r}
+#| label: fig-5-suppl
+#| fig-height: 7.5
+fig5 +
+  geom_text(
+    #aes(label = sprintf("%1.2f", p.sig)),
+    aes(label = round(p.sig * 100), color = (mean < -6) | (mean > 5 & p.sig > .05)),
+    family = "PT Mono", size = 2.5, fontface = "bold"
+  )
 ```
 
 
