@@ -1,5 +1,8 @@
-# Raw data
+# Raw data (wild boars)
 movement_boars_gps/
+
+# Fits (wild boars)
+*_fits.rds
 
 # History files
 .Rhistory

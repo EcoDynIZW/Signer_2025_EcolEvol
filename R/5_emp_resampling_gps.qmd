@@ -1,6 +1,6 @@
 ---
-title: "The 4<sup>th</sup> Dimension of Movement"
-subtitle: "Resampling Movement Data (empirical tracks)"
+title: "The 4<sup>th</sup> Dimension in Animal Movement"
+subtitle: "Empirical Study: Resampling Movement Data"
 author:
   - name: Johannes Signer
     email: jsigner@uni-goettingen.de
@@ -160,8 +160,8 @@ ggplot(gps_boars_resampled, aes(x = factor(res), fill = factor(year(time)))) +
 
 <details><summary>Session Info</summary>
 
-```{r sessionInfo}
-git2r::repository()
+```{r}
+#| label: session-info
 devtools::session_info()
 ```
 

@@ -1,6 +1,6 @@
 ---
-title: "The 4<sup>th</sup> Dimension of Movement"
-subtitle: "Analysis (empirical tracks)"
+title: "The 4<sup>th</sup> Dimension in Animal Movement"
+subtitle: "Empirical Study: Data Visualizations"
 author:
   - name: Johannes Signer
     email: jsigner@uni-goettingen.de
@@ -295,15 +295,15 @@ knitr::include_graphics(paste0(dir_move, "/trajectory_boar_7.png"))
 #| label: plot-lines-raw
 #| fig-width: 10.5
 #| fig-height: 11.5
-dat_est_ssf <- read_rds(paste0(dir_est, "/ssf.rds")) |>
-  dplyr::select(id, res, fits) |>
+dat_est_ssf <- read_rds(paste0(dir_est, "/ssf_est.rds")) |>
+  dplyr::select(id, res, est) |>
   mutate(run_id = 1:nrow(pick(id))) |>
-  unnest(cols = fits) |> mutate(method = "issf")
+  unnest(cols = est) |> mutate(method = "issf")
 
-dat_est_rsf <- read_rds(paste0(dir_est, "/rsf.rds")) |>
-  dplyr::select(id, res, fits) |>
+dat_est_rsf <- read_rds(paste0(dir_est, "/rsf_est.rds")) |>
+  dplyr::select(id, res, est) |>
   mutate(run_id = 1:nrow(pick(id))) |>
-  unnest(cols = fits) |> mutate(method = "rsf")
+  unnest(cols = est) |> mutate(method = "rsf")
 
 dat_est_wrsf <- bind_rows(
     map(list.files(paste0(dir_est, "/wrsf"), full.names = TRUE), ~
@@ -574,7 +574,7 @@ Distributions of environmental variables
 
 ```{r data-import-distributions}
 ## simulated movement paths
-env_var <- stack(paste0(dir_proc, "/env_vars_100m.tif"))
+env_var <- raster::stack(paste0(dir_proc, "/env_vars_100m.tif"))
 
 dat_tracks_gps <- 
   read_rds(paste0(dir_proc, "/boars_resampled_3035.rds")) |> 
@@ -589,29 +589,34 @@ dat_tracks_gps <-
   dplyr::select(method, id, res, x = x_, y = y_, hab, dtw, imp)
 
 dat_tracks_ssf <- 
-  readr::read_rds(paste0(dir_est, "/ssf.rds")) |> 
-  mutate(method = "iSSA") |> 
+  readr::read_rds(paste0(dir_est, "/ssf_fits.rds")) |> 
   unnest(fits) |> 
+  mutate(method = "iSSA") |> 
   filter(case_ == FALSE) |> 
   group_by(id, res, step_id_) |> 
   slice(1) |> 
   ungroup() |> 
   dplyr::select(method, id, res, x = x1_, y = y1_, hab, dtw, imp)
 
-dat_tracks_rp <- 
-  readr::read_rds(paste0(dir_est, "/rsf.rds")) |> 
+dat_tracks_rsf <- 
+  readr::read_rds(paste0(dir_est, "/rsf_fits.rds")) |> 
   mutate(method = "RSA") |> 
-  unnest(data) |> 
-  filter(ID_sim  == 1) |> 
-  dplyr::select(method, id, res, x, y, hab, dtw, imp)
+  unnest(fits) |> 
+  filter(case_ == FALSE) |> 
+  group_by(id, res) |> 
+  mutate(n = n(), step_id_ = rep(1:(n/20), each = 20)) |> 
+  group_by(id, res, step_id_) |> 
+  slice(1) |> 
+  ungroup() |> 
+  dplyr::select(method, id, res, x = x_, y = y_, hab, dtw, imp)
 
 ## combine data sets
 dat_all <- 
   dat_tracks_gps |> 
   bind_rows(dat_tracks_ssf) |> 
-  bind_rows(dat_tracks_rp) |> 
+  bind_rows(dat_tracks_rsf) |> 
   mutate(
-    method = factor(method, levels = c("GPS data", "SSA-rs", "RSA-rp")),
+    method = factor(method, levels = c("GPS data", "iSSA", "RSA")),
     method = fct_rev(method)
   ) |> 
   rename("Distance to water" = dtw, "Forest habitat" = hab, "Imperviousness" = imp) |> 
@@ -625,7 +630,7 @@ dat_all <-
     res = as.numeric(as.character(res))
   )
 
-rm(dat_tracks_gps, dat_tracks_ssf, dat_tracks_rp)
+rm(dat_tracks_gps, dat_tracks_ssf, dat_tracks_rsf)
 
 cols <- c("#4d6cb0", "#00a087", "#f39113")
 colors <- tibble(
@@ -640,11 +645,11 @@ dat_all_col <- left_join(dat_all, colors)
 ```{r plot-distribution-function}
 theme_adj <- 
   theme(
-    axis.text.y = element_text(size = 14),
+    axis.text.y = element_text(size = 16, family = "PT Sans", hjust = 0),
     axis.title.y = element_blank(),
     panel.grid.major = element_blank(),
     panel.background = element_rect(color = "white", fill = "white"),
-    plot.margin = margin(rep(10, 4))
+    plot.margin = margin(10, 20, 10, 10)
   )
 
 plot_rain <- function(var, resolution) {
@@ -671,7 +676,7 @@ plot_rain <- function(var, resolution) {
         slab_size = .25,
         trim = FALSE
       ) +
-      scale_x_continuous(breaks = -3:6) +
+      scale_x_continuous(breaks = -3:6, expand = c(0, 0)) +
       scale_y_discrete(expand = c(.03, .03)) +
       scale_color_identity() +
       scale_fill_identity() +
@@ -704,7 +709,9 @@ plot_bars <- function(resolution) {
     scale_x_continuous(breaks = 0:5*.2) +
     scale_color_identity() +
     scale_fill_identity() +
-    labs(x = "Proportion of Forest Habitat Use", y = NULL, title = NULL)
+    labs(x = "Proportion of Forest Habitat Use", y = NULL, title = NULL) +
+    theme_adj
+    #theme(axis.text.y = element_text(size = 16, family = "PT Sans", hjust = 0))
 }
 ```
 
@@ -727,9 +734,7 @@ g_hab <- plot_bars(res = 30)
 p <- (g_imp | (g_dtw + theme(axis.text.y = element_blank()))) / g_hab + plot_layout(heights = c(1, .5)) +
   plot_annotation(tag_levels = "A", tag_suffix = ".")
 
-ggsave(paste0(dir_plots, "/distributions_emp_res30_wide.pdf"),
-       width = 10, height = 5.8, device = cairo_pdf)
-ggsave(paste0(dir_ms, "/s13_distributions_emp_res30_wide.png"),
+ggsave(paste0(dir_plots, "/s8_distributions_emp_res30_wide.png"),
        width = 10, height = 5.8, dpi = 600, bg = "white")
 ```
 
@@ -751,9 +756,7 @@ g_hab <- plot_bars(res = 360)
 p <- (g_imp | (g_dtw + theme(axis.text.y = element_blank()))) / g_hab + plot_layout(heights = c(1, .5)) +
   plot_annotation(tag_levels = "A", tag_suffix = ".")
 
-ggsave(paste0(dir_plots, "/distributions_emp_res360_wide.pdf"),
-       width = 10, height = 5.8, device = cairo_pdf)
-ggsave(paste0(dir_ms, "/s14_distributions_emp_res360_wide.png"),
+ggsave(paste0(dir_plots, "/s9_distributions_emp_res360_wide.png"),
        width = 10, height = 5.8, dpi = 600, bg = "white")
 ```
 
@@ -775,9 +778,7 @@ g_hab <- plot_bars(res = 1440)
 p <- (g_imp | (g_dtw + theme(axis.text.y = element_blank()))) / g_hab + plot_layout(heights = c(1, .5)) +
   plot_annotation(tag_levels = "A", tag_suffix = ".")
 
-ggsave(paste0(dir_plots, "/distributions_emp_res1440_wide.pdf"),
-       width = 10, height = 5.8, device = cairo_pdf)
-ggsave(paste0(dir_ms, "/s15_distributions_emp_res1440_wide.png"),
+ggsave(paste0(dir_plots, "/s10_distributions_emp_res1440_wide.png"),
        width = 10, height = 5.8, dpi = 600, bg = "white")
 ```
 

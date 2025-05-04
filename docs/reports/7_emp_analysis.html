@@ -9,9 +9,9 @@
 <meta name="author" content="Johannes Signer">
 <meta name="author" content="Cédric Scherer">
 <meta name="author" content="Stephanie Kramer-Schadt">
-<meta name="dcterms.date" content="2025-02-26">
+<meta name="dcterms.date" content="2025-05-02">
 
-<title>The 4th Dimension of Movement</title>
+<title>The 4th Dimension in Animal Movement</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -3102,8 +3102,8 @@ vertical-align: -.125em;
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">The 4<sup>th</sup> Dimension of Movement</h1>
-<p class="subtitle lead">Analysis (empirical tracks)</p>
+<h1 class="title">The 4<sup>th</sup> Dimension in Animal Movement</h1>
+<p class="subtitle lead">Empirical Study: Movement Analysis</p>
 </div>
 
 
@@ -3122,7 +3122,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">February 26, 2025</p>
+      <p class="date">May 2, 2025</p>
     </div>
   </div>
   
@@ -3142,22 +3142,23 @@ vertical-align: -.125em;
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(forcats)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(raster)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(move)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(amt)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(glue)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ctmm)</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(parallel)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="do">## path to empirical data</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>dir_emp <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">&quot;output&quot;</span>, <span class="st">&quot;empirical&quot;</span>, <span class="st">&quot;data_proc&quot;</span>)</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="do">## path + folder for results</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>dir_res <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">&quot;output&quot;</span>, <span class="st">&quot;empirical&quot;</span>, <span class="st">&quot;results&quot;</span>)</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">dir.exists</span>(dir_res)) <span class="fu">dir.create</span>(dir_lscps, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(raster)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(move)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(amt)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(glue)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ctmm)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(parallel)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="do">## path to empirical data</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>dir_emp <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">&quot;output&quot;</span>, <span class="st">&quot;empirical&quot;</span>, <span class="st">&quot;data_proc&quot;</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="do">## path + folder for results</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>dir_res <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">&quot;output&quot;</span>, <span class="st">&quot;empirical&quot;</span>, <span class="st">&quot;results&quot;</span>)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">dir.exists</span>(dir_res)) <span class="fu">dir.create</span>(dir_res, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <section id="import-data" class="level3">
 <h3 class="anchored" data-anchor-id="import-data">Import Data</h3>
@@ -3229,16 +3230,17 @@ vertical-align: -.125em;
 <span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(r.list) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;dist_water&quot;</span>, <span class="st">&quot;imperviousness&quot;</span>, <span class="st">&quot;habitat&quot;</span>)</span>
 <span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(dat)) {</span>
-<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(i)</span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>    <span class="co"># print(i)</span></span>
 <span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>    wRSF <span class="ot">&lt;-</span> ctmm<span class="sc">::</span><span class="fu">rsf.fit</span>(dat<span class="sc">$</span>telemetry[[i]], <span class="at">UD =</span> dat<span class="sc">$</span>akde[[i]], <span class="at">R =</span> r.list, <span class="at">error =</span> <span class="fl">0.1</span>)</span>
 <span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>    r_wrsf <span class="ot">&lt;-</span> <span class="fu">summary</span>(wRSF)<span class="sc">$</span>CI[<span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(r.list), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
 <span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>    r_wrsf <span class="ot">&lt;-</span> r_wrsf <span class="sc">|&gt;</span> <span class="fu">as_tibble</span>() <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">term =</span> <span class="fu">rownames</span>(r_wrsf)) <span class="sc">|&gt;</span></span>
 <span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">select</span>(term, <span class="at">estimate =</span> est, low, high) <span class="sc">|&gt;</span></span>
 <span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="at">term =</span> <span class="fu">map_chr</span>(<span class="fu">strsplit</span>(term, <span class="st">&quot; &quot;</span>), <span class="dv">1</span>), <span class="at">method =</span> <span class="st">&quot;wrsf&quot;</span>)</span>
 <span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>    <span class="fu">write_rds</span>(r_wrsf, <span class="fu">paste0</span>(dir_res, <span class="st">&quot;/wrsf/inst_&quot;</span>, i, <span class="st">&quot;.rds&quot;</span>))</span>
-<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dir.create</span>(<span class="fu">paste0</span>(dir_res, <span class="st">&quot;/wrsf&quot;</span>))</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>    <span class="fu">write_rds</span>(r_wrsf, <span class="fu">paste0</span>(dir_res, <span class="st">&quot;/wrsf/inst_&quot;</span>, i, <span class="st">&quot;.rds&quot;</span>))</span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <hr>
 <details>
@@ -3246,117 +3248,117 @@ vertical-align: -.125em;
 Session Info
 </summary>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>git2r<span class="sc">::</span><span class="fu">repository</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Local:    main /Users/cedric/My Drive/Work/DataViz/Clients/2024_IZW_Support/Signer_TempRes
-Remote:   main @ origin (https://github.com/EcoDynIZW/Signer_TempRes.git)
-Head:     [44e43f5] 2025-02-24: clean-up plot dirs</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">session_info</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">session_info</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>─ Session info ───────────────────────────────────────────────────────────────
  setting  value
  version  R version 4.4.2 (2024-10-31)
- os       macOS Ventura 13.6.4
+ os       macOS Sequoia 15.3.1
  system   aarch64, darwin20
  ui       X11
  language (EN)
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Europe/Berlin
- date     2025-02-26
+ date     2025-05-01
  pandoc   3.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/aarch64/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────
- package     * version date (UTC) lib source
- amt         * 0.3.0.0 2024-06-20 [1] Github (jmsigner/amt@9d6cdc0)
- backports     1.5.0   2024-05-23 [1] CRAN (R 4.4.0)
- broom       * 1.0.5   2023-06-09 [1] CRAN (R 4.4.0)
- cachem        1.0.8   2023-05-01 [1] CRAN (R 4.4.0)
- class         7.3-22  2023-05-03 [1] CRAN (R 4.4.2)
- classInt      0.4-10  2023-09-05 [1] CRAN (R 4.4.0)
- cli           3.6.3   2024-06-21 [1] CRAN (R 4.4.0)
- codetools     0.2-20  2024-03-31 [1] CRAN (R 4.4.2)
- ctmm        * 1.2.0   2023-09-23 [1] CRAN (R 4.4.0)
- DBI           1.2.3   2024-06-02 [1] CRAN (R 4.4.0)
- devtools      2.4.5   2022-10-11 [1] CRAN (R 4.4.0)
- digest        0.6.35  2024-03-11 [1] CRAN (R 4.4.0)
- dplyr       * 1.1.4   2023-11-17 [1] CRAN (R 4.4.0)
- e1071         1.7-14  2023-12-06 [1] CRAN (R 4.4.0)
- ellipsis      0.3.2   2021-04-29 [1] CRAN (R 4.4.0)
- evaluate      0.23    2023-11-01 [1] CRAN (R 4.4.0)
- fansi         1.0.6   2023-12-08 [1] CRAN (R 4.4.0)
- fastmap       1.1.1   2023-02-24 [1] CRAN (R 4.4.0)
- forcats     * 1.0.0   2023-01-29 [1] CRAN (R 4.4.0)
- fs            1.6.4   2024-04-25 [1] CRAN (R 4.4.0)
- generics      0.1.3   2022-07-05 [1] CRAN (R 4.4.0)
- geosphere   * 1.5-18  2022-11-15 [1] CRAN (R 4.4.0)
- git2r         0.35.0  2024-10-20 [1] CRAN (R 4.4.1)
- glue        * 1.8.0   2024-09-30 [1] CRAN (R 4.4.1)
- here        * 1.0.1   2020-12-13 [1] CRAN (R 4.4.0)
- hms           1.1.3   2023-03-21 [1] CRAN (R 4.4.0)
- htmltools     0.5.8.1 2024-04-04 [1] CRAN (R 4.4.0)
- htmlwidgets   1.6.4   2023-12-06 [1] CRAN (R 4.4.0)
- httpuv        1.6.15  2024-03-26 [1] CRAN (R 4.4.0)
- httr          1.4.7   2023-08-15 [1] CRAN (R 4.4.0)
- jsonlite      1.8.8   2023-12-04 [1] CRAN (R 4.4.0)
- KernSmooth    2.23-24 2024-05-17 [1] CRAN (R 4.4.2)
- knitr         1.46    2024-04-06 [1] CRAN (R 4.4.0)
- later         1.3.2   2023-12-06 [1] CRAN (R 4.4.0)
- lattice       0.22-6  2024-03-20 [1] CRAN (R 4.4.2)
- lifecycle     1.0.4   2023-11-07 [1] CRAN (R 4.4.0)
- lubridate   * 1.9.3   2023-09-27 [1] CRAN (R 4.4.0)
- magrittr      2.0.3   2022-03-30 [1] CRAN (R 4.4.0)
- Matrix        1.7-1   2024-10-18 [1] CRAN (R 4.4.2)
- memoise       2.0.1   2021-11-26 [1] CRAN (R 4.4.0)
- mime          0.12    2021-09-28 [1] CRAN (R 4.4.0)
- miniUI        0.1.1.1 2018-05-18 [1] CRAN (R 4.4.0)
- move        * 4.2.4   2023-07-06 [1] CRAN (R 4.4.0)
- pillar        1.9.0   2023-03-22 [1] CRAN (R 4.4.0)
- pkgbuild      1.4.4   2024-03-17 [1] CRAN (R 4.4.0)
- pkgconfig     2.0.3   2019-09-22 [1] CRAN (R 4.4.0)
- pkgload       1.3.4   2024-01-16 [1] CRAN (R 4.4.0)
- profvis       0.3.8   2023-05-02 [1] CRAN (R 4.4.0)
- promises      1.3.0   2024-04-05 [1] CRAN (R 4.4.0)
- proxy         0.4-27  2022-06-09 [1] CRAN (R 4.4.0)
- purrr         1.0.2   2023-08-10 [1] CRAN (R 4.4.0)
- R6            2.5.1   2021-08-19 [1] CRAN (R 4.4.0)
- ragg          1.3.2   2024-05-15 [1] CRAN (R 4.4.0)
- raster      * 3.6-26  2023-10-14 [1] CRAN (R 4.4.0)
- rbibutils     2.2.16  2023-10-25 [1] CRAN (R 4.4.0)
- Rcpp          1.0.12  2024-01-09 [1] CRAN (R 4.4.0)
- Rdpack        2.6     2023-11-08 [1] CRAN (R 4.4.0)
- readr       * 2.1.5   2024-01-10 [1] CRAN (R 4.4.0)
- remotes       2.5.0   2024-03-17 [1] CRAN (R 4.4.0)
- rlang         1.1.4   2024-06-04 [1] CRAN (R 4.4.0)
- rmarkdown     2.26    2024-03-05 [1] CRAN (R 4.4.0)
- rprojroot     2.0.4   2023-11-05 [1] CRAN (R 4.4.0)
- rstudioapi    0.16.0  2024-03-24 [1] CRAN (R 4.4.0)
- sessioninfo   1.2.2   2021-12-06 [1] CRAN (R 4.4.0)
- sf            1.0-16  2024-03-24 [1] CRAN (R 4.4.0)
- shiny         1.8.1.1 2024-04-02 [1] CRAN (R 4.4.0)
- sp          * 2.1-4   2024-04-30 [1] CRAN (R 4.4.0)
- stringi       1.8.4   2024-05-06 [1] CRAN (R 4.4.0)
- stringr       1.5.1   2023-11-14 [1] CRAN (R 4.4.0)
- survival      3.7-0   2024-06-05 [1] CRAN (R 4.4.2)
- systemfonts   1.1.0   2024-05-15 [1] CRAN (R 4.4.0)
- terra         1.7-78  2024-05-22 [1] CRAN (R 4.4.0)
- textshaping   0.4.0   2024-05-24 [1] CRAN (R 4.4.0)
- tibble        3.2.1   2023-03-20 [1] CRAN (R 4.4.0)
- tidyr       * 1.3.1   2024-01-24 [1] CRAN (R 4.4.0)
- tidyselect    1.2.1   2024-03-11 [1] CRAN (R 4.4.0)
- timechange    0.3.0   2024-01-18 [1] CRAN (R 4.4.0)
- tzdb          0.4.0   2023-05-12 [1] CRAN (R 4.4.0)
- units         0.8-5   2023-11-28 [1] CRAN (R 4.4.0)
- urlchecker    1.0.1   2021-11-30 [1] CRAN (R 4.4.0)
- usethis       2.2.3   2024-02-19 [1] CRAN (R 4.4.0)
- utf8          1.2.4   2023-10-22 [1] CRAN (R 4.4.0)
- vctrs         0.6.5   2023-12-01 [1] CRAN (R 4.4.0)
- withr         3.0.0   2024-01-16 [1] CRAN (R 4.4.0)
- xfun          0.49    2024-10-31 [1] CRAN (R 4.4.1)
- xml2          1.3.6   2023-12-04 [1] CRAN (R 4.4.0)
- xtable        1.8-4   2019-04-21 [1] CRAN (R 4.4.0)
- yaml          2.3.8   2023-12-11 [1] CRAN (R 4.4.0)
+ package     * version    date (UTC) lib source
+ amt         * 0.3.0.0    2024-06-20 [1] Github (jmsigner/amt@9d6cdc0)
+ backports     1.5.0      2024-05-23 [1] CRAN (R 4.4.0)
+ broom       * 1.0.5      2023-06-09 [1] CRAN (R 4.4.0)
+ cachem        1.0.8      2023-05-01 [1] CRAN (R 4.4.0)
+ checkmate     2.3.1      2023-12-04 [1] CRAN (R 4.4.0)
+ class         7.3-22     2023-05-03 [1] CRAN (R 4.4.2)
+ classInt      0.4-10     2023-09-05 [1] CRAN (R 4.4.0)
+ cli           3.6.3      2024-06-21 [1] CRAN (R 4.4.0)
+ codetools     0.2-20     2024-03-31 [1] CRAN (R 4.4.2)
+ ctmm        * 1.2.0      2023-09-23 [1] CRAN (R 4.4.0)
+ DBI           1.2.3      2024-06-02 [1] CRAN (R 4.4.0)
+ DEoptimR      1.1-3      2023-10-07 [1] CRAN (R 4.4.0)
+ devtools      2.4.5      2022-10-11 [1] CRAN (R 4.4.0)
+ digest        0.6.35     2024-03-11 [1] CRAN (R 4.4.0)
+ dplyr       * 1.1.4      2023-11-17 [1] CRAN (R 4.4.0)
+ e1071         1.7-14     2023-12-06 [1] CRAN (R 4.4.0)
+ ellipsis      0.3.2      2021-04-29 [1] CRAN (R 4.4.0)
+ evaluate      0.23       2023-11-01 [1] CRAN (R 4.4.0)
+ expm          0.999-9    2024-01-11 [1] CRAN (R 4.4.0)
+ fansi         1.0.6      2023-12-08 [1] CRAN (R 4.4.0)
+ fastmap       1.1.1      2023-02-24 [1] CRAN (R 4.4.0)
+ forcats     * 1.0.0      2023-01-29 [1] CRAN (R 4.4.0)
+ fs            1.6.4      2024-04-25 [1] CRAN (R 4.4.0)
+ generics      0.1.3      2022-07-05 [1] CRAN (R 4.4.0)
+ geosphere   * 1.5-18     2022-11-15 [1] CRAN (R 4.4.0)
+ glue        * 1.8.0      2024-09-30 [1] CRAN (R 4.4.1)
+ Gmedian       1.2.7      2022-06-08 [1] CRAN (R 4.4.0)
+ here        * 1.0.1      2020-12-13 [1] CRAN (R 4.4.0)
+ hms           1.1.3      2023-03-21 [1] CRAN (R 4.4.0)
+ htmltools     0.5.8.1    2024-04-04 [1] CRAN (R 4.4.0)
+ htmlwidgets   1.6.4      2023-12-06 [1] CRAN (R 4.4.0)
+ httpuv        1.6.15     2024-03-26 [1] CRAN (R 4.4.0)
+ httr          1.4.7      2023-08-15 [1] CRAN (R 4.4.0)
+ jsonlite      1.8.8      2023-12-04 [1] CRAN (R 4.4.0)
+ KernSmooth    2.23-24    2024-05-17 [1] CRAN (R 4.4.2)
+ knitr         1.46       2024-04-06 [1] CRAN (R 4.4.0)
+ later         1.3.2      2023-12-06 [1] CRAN (R 4.4.0)
+ lattice       0.22-6     2024-03-20 [1] CRAN (R 4.4.2)
+ lifecycle     1.0.4      2023-11-07 [1] CRAN (R 4.4.0)
+ lubridate   * 1.9.3      2023-09-27 [1] CRAN (R 4.4.0)
+ magrittr      2.0.3      2022-03-30 [1] CRAN (R 4.4.0)
+ Matrix        1.7-1      2024-10-18 [1] CRAN (R 4.4.2)
+ memoise       2.0.1      2021-11-26 [1] CRAN (R 4.4.0)
+ mime          0.12       2021-09-28 [1] CRAN (R 4.4.0)
+ miniUI        0.1.1.1    2018-05-18 [1] CRAN (R 4.4.0)
+ move        * 4.2.4      2023-07-06 [1] CRAN (R 4.4.0)
+ numDeriv      2016.8-1.1 2019-06-06 [1] CRAN (R 4.4.0)
+ pillar        1.9.0      2023-03-22 [1] CRAN (R 4.4.0)
+ pkgbuild      1.4.4      2024-03-17 [1] CRAN (R 4.4.0)
+ pkgconfig     2.0.3      2019-09-22 [1] CRAN (R 4.4.0)
+ pkgload       1.3.4      2024-01-16 [1] CRAN (R 4.4.0)
+ profvis       0.3.8      2023-05-02 [1] CRAN (R 4.4.0)
+ promises      1.3.0      2024-04-05 [1] CRAN (R 4.4.0)
+ proxy         0.4-27     2022-06-09 [1] CRAN (R 4.4.0)
+ purrr       * 1.0.2      2023-08-10 [1] CRAN (R 4.4.0)
+ R6            2.5.1      2021-08-19 [1] CRAN (R 4.4.0)
+ ragg          1.3.2      2024-05-15 [1] CRAN (R 4.4.0)
+ raster      * 3.6-26     2023-10-14 [1] CRAN (R 4.4.0)
+ rbibutils     2.2.16     2023-10-25 [1] CRAN (R 4.4.0)
+ Rcpp          1.0.12     2024-01-09 [1] CRAN (R 4.4.0)
+ Rdpack        2.6        2023-11-08 [1] CRAN (R 4.4.0)
+ readr       * 2.1.5      2024-01-10 [1] CRAN (R 4.4.0)
+ remotes       2.5.0      2024-03-17 [1] CRAN (R 4.4.0)
+ rlang         1.1.4      2024-06-04 [1] CRAN (R 4.4.0)
+ rmarkdown     2.26       2024-03-05 [1] CRAN (R 4.4.0)
+ robustbase    0.99-2     2024-01-27 [1] CRAN (R 4.4.0)
+ rprojroot     2.0.4      2023-11-05 [1] CRAN (R 4.4.0)
+ RSpectra      0.16-1     2022-04-24 [1] CRAN (R 4.4.0)
+ rstudioapi    0.16.0     2024-03-24 [1] CRAN (R 4.4.0)
+ sessioninfo   1.2.2      2021-12-06 [1] CRAN (R 4.4.0)
+ sf            1.0-16     2024-03-24 [1] CRAN (R 4.4.0)
+ shiny         1.8.1.1    2024-04-02 [1] CRAN (R 4.4.0)
+ sp          * 2.1-4      2024-04-30 [1] CRAN (R 4.4.0)
+ stringi       1.8.4      2024-05-06 [1] CRAN (R 4.4.0)
+ stringr       1.5.1      2023-11-14 [1] CRAN (R 4.4.0)
+ survival      3.7-0      2024-06-05 [1] CRAN (R 4.4.2)
+ systemfonts   1.1.0      2024-05-15 [1] CRAN (R 4.4.0)
+ terra         1.7-78     2024-05-22 [1] CRAN (R 4.4.0)
+ textshaping   0.4.0      2024-05-24 [1] CRAN (R 4.4.0)
+ tibble        3.2.1      2023-03-20 [1] CRAN (R 4.4.0)
+ tidyr       * 1.3.1      2024-01-24 [1] CRAN (R 4.4.0)
+ tidyselect    1.2.1      2024-03-11 [1] CRAN (R 4.4.0)
+ timechange    0.3.0      2024-01-18 [1] CRAN (R 4.4.0)
+ tzdb          0.4.0      2023-05-12 [1] CRAN (R 4.4.0)
+ units         0.8-5      2023-11-28 [1] CRAN (R 4.4.0)
+ urlchecker    1.0.1      2021-11-30 [1] CRAN (R 4.4.0)
+ usethis       2.2.3      2024-02-19 [1] CRAN (R 4.4.0)
+ utf8          1.2.4      2023-10-22 [1] CRAN (R 4.4.0)
+ vctrs         0.6.5      2023-12-01 [1] CRAN (R 4.4.0)
+ withr         3.0.0      2024-01-16 [1] CRAN (R 4.4.0)
+ xfun          0.49       2024-10-31 [1] CRAN (R 4.4.1)
+ xml2          1.3.6      2023-12-04 [1] CRAN (R 4.4.0)
+ xtable        1.8-4      2019-04-21 [1] CRAN (R 4.4.0)
+ yaml          2.3.8      2023-12-11 [1] CRAN (R 4.4.0)
 
  [1] /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/library
 
