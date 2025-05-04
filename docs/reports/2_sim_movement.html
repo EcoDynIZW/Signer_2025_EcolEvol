@@ -9,7 +9,7 @@
 <meta name="author" content="Johannes Signer">
 <meta name="author" content="Cédric Scherer">
 <meta name="author" content="Stephanie Kramer-Schadt">
-<meta name="dcterms.date" content="2025-04-29">
+<meta name="dcterms.date" content="2025-05-04">
 
 <title>The 4th Dimension in Animal Movement</title>
 <style>
@@ -3120,7 +3120,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 29, 2025</p>
+      <p class="date">May 4, 2025</p>
     </div>
   </div>
   
@@ -3238,9 +3238,9 @@ vertical-align: -.125em;
 <span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>  cc <span class="ot">&lt;-</span> coefs[i, ] <span class="sc">|&gt;</span> <span class="fu">unlist</span>()</span>
 <span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  base_name <span class="ot">&lt;-</span> <span class="cf">if</span> (hpc) <span class="st">&quot;/home/proj/results/&quot;</span> <span class="cf">else</span> <span class="fu">here</span>(<span class="st">&quot;output&quot;</span>, <span class="st">&quot;simulated&quot;</span>)</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  base_name <span class="ot">&lt;-</span> <span class="cf">if</span> (hpc) <span class="st">&quot;/home/proj/results/&quot;</span> <span class="cf">else</span> <span class="fu">here</span>(<span class="st">&quot;output&quot;</span>, <span class="st">&quot;simulated&quot;</span>, <span class="st">&quot;single_runs&quot;</span>)</span>
 <span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>  file_name <span class="ot">&lt;-</span> <span class="fu">paste0</span>(base_name, <span class="st">&quot;/results_&quot;</span>, <span class="fu">str_pad</span>(cc[<span class="st">&quot;run_id&quot;</span>], <span class="dv">6</span>, <span class="at">pad =</span> <span class="st">&quot;0&quot;</span>), <span class="st">&quot;.rds&quot;</span>)</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>  lscp_path <span class="ot">&lt;-</span> <span class="cf">if</span> (hpc) <span class="st">&quot;/home/proj/data/landscapes/&quot;</span> <span class="cf">else</span> <span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;simulated&quot;</span>, <span class="st">&quot;lanfscapes&quot;</span>)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>  lscp_path <span class="ot">&lt;-</span> <span class="cf">if</span> (hpc) <span class="st">&quot;/home/proj/data/landscapes/&quot;</span> <span class="cf">else</span> <span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;simulated&quot;</span>, <span class="st">&quot;landscapes&quot;</span>)</span>
 <span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(file_name)) {</span>
 <span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
@@ -3289,14 +3289,14 @@ Session Info
 <pre><code>─ Session info ───────────────────────────────────────────────────────────────
  setting  value
  version  R version 4.4.2 (2024-10-31)
- os       macOS Sequoia 15.3.1
+ os       macOS Sequoia 15.4.1
  system   aarch64, darwin20
  ui       X11
  language (EN)
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Europe/Berlin
- date     2025-04-29
+ date     2025-05-04
  pandoc   3.2 @ /Applications/RStudio.app/Contents/Resources/app/quarto/bin/tools/aarch64/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────

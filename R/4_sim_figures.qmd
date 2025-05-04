@@ -632,8 +632,6 @@ fig5 +
     family = "PT Mono", size = 2.5, fontface = "bold"
   )
 ```
-
-
 *** 
   
 <details><summary>Session Info</summary>

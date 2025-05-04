@@ -146,9 +146,9 @@ res <- mclapply(1:2, function(i) try({
 
   cc <- coefs[i, ] |> unlist()
 
-  base_name <- if (hpc) "/home/proj/results/" else here("output", "simulated")
+  base_name <- if (hpc) "/home/proj/results/" else here("output", "simulated", "single_runs")
   file_name <- paste0(base_name, "/results_", str_pad(cc["run_id"], 6, pad = "0"), ".rds")
-  lscp_path <- if (hpc) "/home/proj/data/landscapes/" else here("data", "simulated", "lanfscapes")
+  lscp_path <- if (hpc) "/home/proj/data/landscapes/" else here("data", "simulated", "landscapes")
   
   if (!file.exists(file_name)) {
 
