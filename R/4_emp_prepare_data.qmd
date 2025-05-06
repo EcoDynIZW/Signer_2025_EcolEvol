@@ -1,0 +1,256 @@
+---
+title: "The 4<sup>th</sup> Dimension in Animal Movement"
+subtitle: "Empirical Study: Prepare Movement Data"
+author:
+  - name: Johannes Signer
+    email: jsigner@uni-goettingen.de
+  - name: Cédric Scherer
+    email: viz@cedricscherer.com
+  - name: Stephanie Kramer-Schadt
+    email: kramer@izw-berlin.de
+date: "`r Sys.Date()`"
+format:
+    html: 
+      theme: flatly
+      embed-resources: true
+      toc: true
+      backgroundcolor: '#ffffff'
+knitr:
+  opts_chunk:    
+    dev: "ragg_png"
+    retina: 1
+    dpi: 300
+execute:
+  freeze: auto
+  echo: true
+  warning: false
+  message: false
+  cache: true
+  fig-width: 12
+  fig-height: 8
+editor: source
+editor_options:
+   chunk_output_type: inline
+---
+
+```{r}
+#| label: setup
+library(readr) 
+library(dplyr) 
+library(tidyr) 
+library(ggplot2)
+library(stringr)
+library(lubridate)
+library(purrr)
+library(sf) 
+library(terra)
+library(move)
+library(moveVis)
+library(here)
+
+## define proj string
+projection <- "+proj=longlat +datum=WGS84"
+
+## plot theme
+theme_set(d6::theme_d6(base_family = "PT Sans"))
+theme_update(
+  panel.grid.major.x = element_blank(),
+  panel.grid.major.y = element_line(color = "#fefefe", linewidth = .5),
+  panel.grid.minor = element_blank(),
+  panel.background = element_rect(fill = "grey95", color = "grey95")
+)
+
+## path to movement data
+dir_geo <- here("data", "empirical", "movement_boars_gps")
+
+## path + folder for processed data
+dir_proc <- here("output", "empirical", "data_proc")
+if (!dir.exists(dir_proc)) dir.create(dir_proc, recursive = TRUE)
+```
+
+
+```{r data-preparation}
+gps_boars_raw <- read_sf(paste0(dir_geo, "/2013_sus-scrofa_de_telemetry_stillfried.gpkg"))
+
+gps_boars <- gps_boars_raw |> 
+  mutate(
+    timestamp = as_datetime(timestamp),
+    date = as_date(timestamp),
+    yday = yday(timestamp),
+    week = week(timestamp),
+    month = month(timestamp),
+    year = factor(year(timestamp)),
+    long = st_coordinates(gps_boars_raw)[,1],
+    lat = st_coordinates(gps_boars_raw)[,2]
+  ) |> 
+  arrange(tag.local.identifier, timestamp) |>
+  group_by(tag.local.identifier) |> 
+  mutate(
+    diff = timestamp - lag(timestamp),
+    ## adjust timestamp to 'every 30 minutes'
+    time_clean = round_date(timestamp, "30 minutes"),
+    diff_clean = time_clean - lag(time_clean)
+  ) |> 
+  ungroup() |> 
+  ## remove timestamps that are too close
+  filter(diff_clean != 0) 
+```
+
+```{r}
+#| label: data-resampling
+## function to resample movement data per id
+aggregate_id_res <- function(id, resolution) {
+  
+  df <- gps_boars |> 
+    as.data.frame() |> 
+    filter(tag.local.identifier == id) |> 
+    df2move(
+      proj = "+init=epsg:25833 +proj=longlat +zone=33 +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0", 
+      x = "long", 
+      y = "lat", 
+      time = "timestamp"
+    ) |> 
+    align_move(res = resolution, unit = "mins") |> 
+    as_tibble() |> 
+    dplyr::select(x, y, time)
+
+  write_csv(df, paste0(dir_proc, "/boars_resampled_single", id, "_res", resolution, ".csv"))
+}
+
+
+## resample data
+rds_file <- paste0(dir_proc, "/boars_resampled.rds")
+
+if(!file.exists(rds_file)) {
+  
+  path_single <- paste0(dir_proc, "/boars_resampled_single")
+  if (!dir.exists(path_single)) dir.create(path_single, showWarnings = TRUE, recursive = TRUE)
+  
+  res <- c(30, 60, 180, 360, 720, 1440)
+  ids <- unique(gps_boars$tag.local.identifier)
+  
+  res_map <- rep(res, each = length(ids))
+  ids_map <- rep(ids, times = length(res))
+  
+  gps_boars_resampled_all <- 
+    map2_dfr(ids_map, res_map, 
+             ~aggregate_id_res(id = .x, resolution = .y) |> 
+                mutate(id = .x, res = .y))
+  
+  
+  ## only keep animals with 150+ locations with coarsest resolution
+  gps_boars_resampled <-
+    gps_boars_resampled_all |> 
+    group_by(id) |> 
+    add_count(res) |> 
+    filter(min(n) >= 150) |> 
+    ungroup() |> 
+    dplyr::select(-n)
+  
+  ## save resampled data
+  write_rds(gps_boars_resampled, rds_file)
+} else {
+  gps_boars_resampled <- read_rds(rds_file)
+}
+
+## inspect resampled data
+ggplot(gps_boars_resampled, aes(x = factor(res), fill = factor(year(time)))) +
+  geom_bar() +
+  facet_wrap(~id, ncol = 4) +
+  scale_fill_brewer(palette = "Dark2", name = NULL) +
+  labs(x = "Resolution (minutes)", y = "Number of observations")
+```
+
+
+## Clean Movement Data
+
+```{r}
+#| label: combine-filled-data
+sf_boars <- 
+  read_rds(paste0(dir_proc, "/boars_resampled.rds")) |> 
+  mutate(id = str_replace(id, "IZW_", "")) |>
+  ## turn into sf object to change projection
+  st_as_sf(coords = c("x", "y"), crs = projection) |>
+  st_transform(crs = 3035) 
+  
+## turn into data frame again
+df_boars <-
+  sf_boars |>
+  mutate(
+    id = factor(id, levels = sort(as.numeric(unique(sf_boars$id)))),
+    x = st_coordinates(sf_boars)[,1],
+    y = st_coordinates(sf_boars)[,2]
+  ) |>
+  as_tibble() |>
+  dplyr::select(id, res, time, x, y)
+
+rds_boars <- paste0(dir_proc, "/boars_resampled_3035.rds")
+if (!file.exists(rds_boars)) write_rds(df_boars, rds_boars)
+```
+
+## Clean Environmental Variables
+
+```{r}
+#| label: import-gis-data
+tif <- paste0(dir_proc, "/env_vars_100m.tif")
+
+if(!file.exists(tif)) {
+  
+  ## define path
+  gis_path <- here("data", "empirical", "environmental_variables")
+  
+  extent <- ext(st_buffer(sf_boars, 10000))
+  
+  ## Distance to water bodies
+  dtw_raw <- rast(paste0(gis_path, "/dist_water_raster.tif"))
+  names(dtw_raw) <- "dtw"
+  
+  ## Percentage of green areas 
+  tcd_raw <- rast(paste0(gis_path, "/tree_cover_density_copernicus_2015_100m_03035_berlin_brandenburg.tif"))
+  names(tcd_raw) <- "tcd"
+  
+  ## Imperviousness
+  imp_raw <- rast(paste0(gis_path, "/imperviousness_copernicus_2015_100m_03035_berlin_brandenburg.tif")) 
+  names(imp_raw) <- "imp"
+  
+  ## crop to same extent
+  dtw <- crop(dtw_raw, extent, snap = "out")
+  tcd <- crop(tcd_raw, dtw, snap = "out")
+  imp <- crop(imp_raw, dtw, snap = "out") 
+  
+  ## adjust grid to match with other rasters
+  imp_adj <- terra::resample(imp, dtw, method = "average")
+  tcd_adj <- terra::resample(tcd, dtw, method = "average")
+  
+  ## create habitat raster
+  rc <- function(x) {
+    ## tree cover above 75% is classified as "forest" (1),
+    ## everything else as "non-forest" (0)
+    ifelse(x <= 75, 0, 1)
+  }
+  hab <- lapp(tcd_adj, fun = rc)
+  names(hab) <- "hab"
+  
+  ## standardize variables
+  dtw[] <- (dtw[] - mean(dtw[], na.rm = TRUE)) / sd(dtw[], na.rm = TRUE) 
+  imp_adj[] <- (imp_adj[] - mean(imp_adj[], na.rm = TRUE)) / sd(imp_adj[], na.rm = TRUE)
+  
+  ## as raster stack
+  env_vars <- c(dtw, imp_adj, hab)
+  
+  ## save landscapes
+  writeRaster(x = env_vars, filename = tif, overwrite = TRUE)
+} 
+```
+
+***
+
+<details><summary>Session Info</summary>
+
+```{r}
+#| label: session-info
+devtools::session_info()
+```
+
+</details>
+

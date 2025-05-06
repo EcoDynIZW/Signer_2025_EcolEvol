@@ -1,0 +1,662 @@
+---
+title: "The 4<sup>th</sup> Dimension in Animal Movement"
+subtitle: "Simulation Study: Data Visualizations"
+author:
+  - name: Johannes Signer
+    email: jsigner@uni-goettingen.de
+  - name: Cédric Scherer
+    email: viz@cedricscherer.com
+  - name: Stephanie Kramer-Schadt
+    email: kramer@izw-berlin.de
+date: "`r Sys.Date()`"
+format:
+    html: 
+      theme: flatly
+      self-contained: true
+      toc: true
+      backgroundcolor: '#ffffff'
+knitr:
+  opts_chunk:    
+    dev: "ragg_png"
+    retina: 1
+    dpi: 300
+execute:
+  freeze: auto
+  echo: true
+  warning: false
+  message: false
+  cache: true
+  fig-width: 12
+  fig-height: 7.8
+  fig-cap: ""
+editor: source
+editor_options:
+   chunk_output_type: inline
+---
+
+## Preparation
+
+```{r}
+#| label: setup
+#| cache: false
+## packages
+library(readr)
+library(dplyr)
+library(forcats)
+library(purrr)
+library(raster)
+library(ggplot2)
+library(ggh4x)
+library(ggtext)
+library(scico)
+library(patchwork)
+library(magick)
+library(here)
+
+## plot theme
+theme_set(d6::theme_d6(base_size = 18, legend = "bottom"))
+
+theme_update(
+  panel.grid.major.x = element_blank(),
+  panel.grid.major.y = element_line(color = "#fefefe", linewidth = .5),
+  panel.grid.minor = element_blank(),
+  panel.background = element_rect(fill = "grey95", color = "grey95"),
+  panel.border = element_rect(fill = "transparent", color = "transparent"),
+  panel.spacing.x = unit(.9, "lines"),
+  panel.spacing.y = unit(1.5, "lines"),
+  legend.justification = "left",
+  legend.box.margin = margin(-20, 0, 0, 0),
+  legend.text = element_text(family = "PT Sans Narrow"),
+  axis.text = element_text(family = "PT Mono", size = rel(.7)),
+  axis.text.x = element_text(margin = margin(t = 5)),
+  axis.text.y = element_text(margin = margin(r = 5)),
+  axis.text.y.right = element_text(hjust = 1),
+  axis.ticks.length = unit(0, "lines"),
+  strip.text = element_text(color = "black"),
+  strip.text.x = element_markdown(face = "plain", vjust = 0, lineheight = 1.05),
+  strip.text.y.left = element_markdown(angle = 0, hjust = 0, vjust = .5),
+  strip.background = element_rect(color = "transparent", fill = "transparent"),
+  strip.placement = "outside",
+  plot.title = element_markdown(),
+  plot.subtitle = element_text(hjust = .5, size = rel(1.12)),
+  plot.margin = margin(rep(1.5, 4))
+)
+
+## path + folder for plots
+dir_plots <- here("plots")
+if (!dir.exists(dir_plots)) dir.create(dir_plots, recursive = TRUE)
+```
+
+
+### Import Simulated Landscapes
+
+```{r}
+#| label: landscapes
+#| cache: false
+lscp_elv <- read_rds(here("data", "simulated", "landscapes", "1", "cont.rds"))
+lscp_hab <- read_rds(here("data", "simulated", "landscapes", "1", "cat.rds"))
+lscp_hr <- read_rds(here("data", "simulated", "landscapes", "hr.rds"))
+
+lscp_mix <- 
+  list(
+    calc(stack(lscp_elv[[1]], lscp_hab[[1]]), mean),
+    calc(stack(lscp_elv[[2]], lscp_hab[[2]]), mean),
+    calc(stack(lscp_elv[[3]], lscp_hab[[3]]), mean),
+    calc(stack(lscp_elv[[3]], lscp_hab[[1]]), mean),
+    calc(stack(lscp_elv[[1]], lscp_hab[[3]]), mean)
+  )
+```
+
+
+## Import Simulation Results
+
+```{r}
+#| label: data-estimates
+#| cache: false
+dat_est <- read_rds(here("output", "simulated", "sim_results_combined.rds"))
+```
+
+
+## Plot Settings
+
+```{r}
+#| label: plot-params
+#| cache: false
+colors <- c(`Elevation (numeric)` = "#CD9804", `Habitat (categorical)` = "#1B9E77")
+width <- 1.2
+spacing <- .6
+```
+
+
+## Visualizations
+
+### Figure 1
+
+Raw maps for conceptual figure
+
+```{r}
+#| label: function-plot-maps
+#| cache: false
+plot_map <- function(raster, layer, titles = c("low", "intermediate", "high")) {
+  
+  dat <- 
+    raster[[layer]] |>  
+    raster::rasterToPoints() |>
+    as_tibble()
+
+  if (names(dat)[3] == "var1") var <- "elevation"
+  if (names(dat)[3] == "var2") var <- "habitat"
+  if (names(dat)[3] == "layer") var <- "combined"
+  if (names(dat)[3] == "d") var <- "directionality"
+  
+  if (var == "habitat") dat <- mutate(dat, var2 = factor(var2, levels = c(1, 0), labels = c("Habitat", "Matrix")))
+  
+  title <- titles[layer]
+  
+  # if (layer == 1) { title <- "low" }
+  # if (layer == 2) { title <- "intermediate" }
+  # if (layer == 3) { title <- "high" }
+  
+  map <-
+    dat |> 
+    dplyr::select("x" = 1, "y" = 2, "z" = 3) |> 
+    ggplot(aes(x, y, fill = z)) + 
+    geom_raster() +
+    scale_x_continuous(name = NULL, labels = scales::label_comma()) +
+    scale_y_continuous(name = NULL, labels = scales::label_comma()) +
+    coord_equal(clip = "off", expand = FALSE) +
+    labs(subtitle = title) +
+    theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      panel.border = element_blank(),
+      legend.position = "bottom",
+      legend.direction = "vertical",
+      plot.subtitle = element_text(margin = margin(15, 1, -5, 1)),
+      axis.text.x = element_blank(),
+      axis.text.y = element_blank(),
+      #axis.text = element_text(margin = margin(t = 12), family = "PT Mono"),
+      #axis.text.x = element_text(margin = margin(t = 12)),
+      #axis.text.y = element_text(margin = margin(r = 12)),
+      axis.ticks.length = unit(0, "lines"),
+      plot.margin = margin(rep(1, 4))
+    )
+  
+  if (var == "elevation") {
+    map <- map +
+      #scale_fill_scico(palette = "bamako", midpoint = .5, limits = c(0, 1), name = NULL) +
+      scale_fill_gradientn(
+        colors = c("#feedbf", "#fde298", "#fcd872", "#fbcd4b", "#fbc225", "#f3b505", "#cd9804", "#a77b03", "#805f02", "#5a4202"),
+        name = NULL
+      ) +
+      theme(
+        legend.text = element_text(family = "PT Mono"),
+        legend.key.width = unit(7.5, "lines"), legend.key.height = unit(.75, "lines"),
+        legend.direction = "horizontal", legend.ticks = element_blank()
+      )
+  }
+  
+  if (var == "habitat") {
+    map <- map +
+      scale_fill_manual(values = c("#00664A", "#E0DDC9"), name = NULL) +
+      theme(legend.text = element_text(family = "PT Sans Narrow", size = rel(1)),
+            legend.key.spacing.y = unit(.2, "lines"))
+  }
+  
+  if (var == "combined") {
+    map <- map +
+      scale_fill_gradientn(
+        colors = c('#ffea9b', '#e0d689', '#c0c27e', '#a1af72', '#839c67', '#65895a', '#49764d', '#2b6340', '#005133'),
+        limits = c(0, 1), name = NULL
+      ) +
+      theme(
+        legend.text = element_text(family = "PT Mono"), legend.justification = "center",
+        legend.key.width = unit(7.5, "lines"), legend.key.height = unit(.75, "lines"),
+        legend.direction = "horizontal", legend.ticks = element_blank(),
+        plot.subtitle = element_markdown()
+      )
+  }
+  
+  if (var == "directionality") {
+    
+    lims <- range(dat$d)
+    
+    map <- map +
+      scico::scale_fill_scico(
+        palette = "lapaz", direction = -1, name = NULL, limits = lims,
+        breaks = lims, labels = c("high", "low")
+      ) +
+      theme(
+        legend.text = element_text(family = "PT Sans Narrow"), legend.justification = "center",
+        legend.key.width = unit(2.5, "lines"), legend.key.height = unit(.75, "lines"),
+        legend.direction = "horizontal", legend.ticks = element_blank(),
+        plot.subtitle = element_markdown()
+      )
+  }
+  
+  return(map)
+}
+```
+
+
+```{r}
+#| label: landscapes-elevation
+#| cache: false
+#| fig-width: 8
+#| fig-height: 4.7
+list_elv <- map(1:3, ~plot_map(lscp_elv, .x))
+
+maps_elv <- 
+  list_elv[[1]] + plot_spacer() + list_elv[[2]] + plot_spacer() + list_elv[[3]] +
+  plot_layout(guides = "collect", widths = c(1, .1, 1, .1, 1)) +
+  plot_annotation(title = "**Elevation** (numeric)", 
+                  theme = theme(legend.box.margin = margin(-5, 1, -5, 5),
+                                plot.title = element_markdown(face = "plain", hjust = 0),
+                                plot.title.position = "plot"))
+
+ggsave(paste0(dir_plots, "/_raw/1_s1_sim_maps_elv_1.png"), width = 8, height = 4.7, dpi = 600)
+
+maps_elv
+```
+
+
+```{r}
+#| label: landscapes-habitat
+#| cache: false
+#| fig-width: 8
+#| fig-height: 4.7
+list_hab <- map(1:3, ~plot_map(lscp_hab, .x))
+
+maps_hab <- 
+  list_hab[[1]] + plot_spacer() + list_hab[[2]] + plot_spacer() + list_hab[[3]] +
+  plot_layout(guides = "collect", widths = c(1, .1, 1, .1, 1)) +
+  plot_annotation(title = "**Habitat** (categorical)", 
+                  theme = theme(legend.justification = "left", 
+                                legend.box.margin = margin(-9, 1, -5, 1),
+                                plot.title = element_markdown(face = "plain", hjust = 0),
+                                plot.title.position = "plot"))
+
+ggsave(paste0(dir_plots, "/_raw/1_s1_sim_maps_hab_1.png"), width = 8, height = 4.7, dpi = 600)
+
+maps_hab
+```
+
+
+
+```{r}
+#| label: landscapes-combined
+#| fig-width: 12
+#| fig-height: 4.7
+list_mix <- map(1:5, ~plot_map(lscp_mix, .x, titles = c("both<br>low", "both<br>intermediate", "both<br>high", 
+                                                        "Elevation high<br>Habitat low", "Elevation low<br>Habitat high")))
+
+maps_mix <- 
+  list_mix[[1]] + plot_spacer() + list_mix[[2]] + plot_spacer() + list_mix[[3]] + plot_spacer() + list_mix[[4]] + plot_spacer() + list_mix[[5]] +
+  plot_layout(guides = "collect", widths = c(1, .1, 1, .1, 1, .1, 1, .1, 1), nrow = 1) +
+  plot_annotation(title = "**Combined variables**", 
+                  theme = theme(legend.justification = "left", 
+                                legend.box.margin = margin(0, 1, -5, 10),
+                                plot.title = element_markdown(face = "plain", hjust = 0),
+                                plot.title.position = "plot"))
+
+ggsave(paste0(dir_plots, "/_raw/1_sim_maps_mix_1.png"), width = 12, height = 4.7, dpi = 600)
+
+maps_mix
+```
+
+
+```{r}
+#| label: landscapes-homing-tendency
+#| fig-width: 4
+#| fig-height: 4.7
+map_hr <- 
+  plot_map(lscp_hr, 1, titles = NULL) +
+  ggtitle("Homing tendency") +
+  theme(
+    legend.justification = "left", 
+    legend.box.margin = margin(0, 1, -5, 1),
+    plot.title = element_markdown(face = "bold", hjust = 0),
+    plot.title.position = "plot",
+    legend.key.width = unit(3, "lines")
+  )
+
+ggsave(paste0(dir_plots, "/_raw/1_sim_maps_dir.png"), width = 4, height = 4.7, dpi = 600)
+
+map_hr
+```
+
+
+### Figure 3
+
+Estimates across methods and levels of autocorrelation per environmental variable without homing tendency (hr)
+
+```{r}
+#| label: fig-3-landscapes
+dat_fig3 <-  
+  bind_rows(
+    dat_est |> filter(var1 != 0, var2 == 0, hr == 0, lscp_var2_ac == 1) |>
+      mutate(lscp_var_ac = lscp_var1_ac),
+    dat_est |> filter(var1 == 0, var2 != 0, hr == 0, lscp_var1_ac == 1) |>
+      mutate(lscp_var_ac = lscp_var2_ac),
+  ) |>
+  mutate(
+    method = factor(method, labels = c("**iSSA**", "**RSA**", "**wRSA**")),
+    term = if_else(term == "var1", "Elevation (numeric)", "Habitat (categorical)"),
+    lscp_var_ac = factor(lscp_var_ac, levels = 1:3,
+                         labels = c("low", "**Level of autocorrelation**<br>intermediate", "high")))
+
+labs_fig3 <- 
+  dat_fig3 |> 
+  filter(by == 1, method == "**iSSA**", lscp_var_ac == "low") |> 
+  mutate(
+    pos = if_else(term == "Elevation (numeric)", max(estimate), min(estimate)),
+    lab = if_else(term == "Elevation (numeric)", "Elevation", "Habitat"),
+    just = if_else(term == "Elevation (numeric)", -.8, 1.8),
+  ) |> 
+  dplyr::select(by, method, term, lscp_var_ac, pos, just, lab) |> 
+  unique()
+
+ggplot(
+    data = dat_fig3 |> filter(estimate > -50), 
+    aes(x = factor(by), y = estimate)
+  ) +
+  geom_violin(
+    aes(color = term, fill = after_scale(prismatic::clr_lighten(color, .35))), 
+    position = position_dodge(width = spacing), width = width, 
+    bw = .7, linewidth = 0
+  ) +
+  geom_hline(yintercept = 0, color = "#BABABA") +
+  geom_violin(
+    aes(color = term, fill = after_scale(prismatic::clr_lighten(color, .35))), 
+    position = position_dodge(width = spacing), width = width, 
+    bw = .7, alpha = .4, linewidth = 0
+  ) +
+  stat_summary(
+    aes(color = term, color = after_scale(prismatic::clr_darken(color, .35))),
+    fun.data = "mean_sdl", fun.args = list(mult = 1),
+    position = position_dodge(width = spacing),
+    size = .2
+  ) +
+  geom_text(
+    data = labs_fig3, 
+    aes(y = pos, label = lab, vjust = just,
+        color = term),
+    position = position_dodge(width = spacing),
+    family = "PT Sans Narrow", fontface = "bold", size = 5, show.legend = FALSE
+  ) +
+  geom_text(
+    data = dat_fig3 |> filter(estimate < -50) |> mutate(estimate = -34), 
+    aes(color = term, label = "↓ outlier with an estimate of —85.9 not shown"),
+    position = position_nudge(x = .13),
+    hjust = 0, size = 3.9, family = "PT Sans Narrow", show.legend = FALSE
+  ) +
+  facet_grid(method ~ lscp_var_ac, scale = "free_y", space = "free_y", switch = "y") +
+  scale_y_continuous(position = "right", breaks = -3:3*10) +
+  scale_color_manual(values = colors) +
+  labs(x = "Sampling interval", y = "Estimate", color = NULL)
+
+ggsave(paste0(dir_plots, "/3_sim_est_lscp_ac.png"), width = 12, height = 7.8, dpi = 600, bg = "white")
+```
+
+
+### Figure 4
+
+Estimates across methods and levels of autocorrelation per environmental variable for simulations with homing tendency (hr)
+
+```{r}
+#| label: fig-4
+#| fig-height: 8.4
+dat_fig4 <- 
+  bind_rows(
+    dat_est |> filter(var1 != 0, var2 != 0, hr != 0,
+                  lscp_var1_ac == lscp_var2_ac) |>
+      mutate(lscp = as.character(lscp_var1_ac)),
+    dat_est |> filter(var1 != 0, var2 != 0, hr == 0, lscp_var1_ac == 3, lscp_var2_ac == 1) |>
+      mutate(lscp = "var1 ↑; var2 ↓"),
+    dat_est |> filter(var1 != 0, var2 != 0, hr == 0, lscp_var1_ac == 1, lscp_var2_ac == 3) |>
+      mutate(lscp = "var1 ↓; var2 ↑")
+  ) |> 
+  mutate(
+    term = if_else(term == "var1", "Elevation (numeric)", "Habitat (categorical)"),
+    method = factor(method, labels = c("**iSSA**", "**RSA**", "**wRSA**")),
+    group = if_else(lscp %in% 1:3, "<b style='font-size:18pt;'>Same autocrorrelation levels for both variables</b>", "<b style='font-size:18pt;'>Different autocorrelation levels</b>"),
+    group = factor(group, levels = c("<b style='font-size:18pt;'>Same autocrorrelation levels for both variables</b>", "<b style='font-size:18pt;'>Different autocorrelation levels</b>")),
+    lscp = factor(lscp, labels = c("low", "intermediate", "high", "Elevation high<br>Habitat low", "Elevation low<br>Habitat high"))
+  )
+
+ggplot(dat_fig4, aes(x = factor(by), y = estimate)) +
+  geom_violin(
+    aes(color = term, fill = after_scale(prismatic::clr_lighten(color, .35))), 
+    position = position_dodge(width = spacing), width = width, 
+    bw = .7, linewidth = 0
+  ) +
+  geom_hline(yintercept = 0, color = "#BABABA") +
+  geom_violin(
+    aes(color = term, fill = after_scale(prismatic::clr_lighten(color, .35))), 
+    position = position_dodge(width = spacing), width = width, 
+    bw = .7, alpha = .4, linewidth = 0
+  ) +
+  stat_summary(
+    aes(color = term, color = after_scale(prismatic::clr_darken(color, .35))),
+    fun.data = "mean_sdl", fun.args = list(mult = 1),
+    position = position_dodge(width = spacing),
+    size = .2
+  ) +
+  facet_nested(
+    method ~ group + lscp,
+    axes = "margins", remove_labels = "x", 
+    scales = "free_y", space = "free_y", switch = "y"
+  ) +
+  scale_y_continuous(position = "right") + #, breaks = -3:3*10
+  scale_color_manual(values = colors) +
+  labs(x = "Sampling interval", y = "Estimate", color = NULL) +
+  theme(
+    strip.text.x = element_markdown(size = rel(.85), vjust = .5, margin = margin(6, 1, 2, 1)),
+    ggh4x.facet.nestline = element_line(colour = "#c6c6c6")
+  )
+
+ggsave(paste0(dir_plots, "/4_sim_est_lscp_ac_hr.png"), width = 12, height = 8.4, dpi = 600, bg = "white")
+```
+
+```{r}
+#| fig-height: 8.4
+dat_fig4_out <- 
+  dat_fig4 |> 
+  filter(estimate < -50) |> 
+  mutate(estimate = -50)
+
+out_lab <- paste(nrow(dat_fig4_out), "estimates lower than -50 ↓")
+
+ggplot(
+    data = dat_fig4 |> filter(estimate > -50),
+    aes(x = factor(by), y = estimate)
+  ) +
+  geom_violin(
+    aes(color = term, fill = after_scale(prismatic::clr_lighten(color, .35))), 
+    position = position_dodge(width = spacing), width = width, 
+    bw = .7, linewidth = 0
+  ) +
+  geom_hline(yintercept = 0, color = "#BABABA") +
+  geom_violin(
+    aes(color = term, fill = after_scale(prismatic::clr_lighten(color, .35))), 
+    position = position_dodge(width = spacing), width = width, 
+    bw = .7, alpha = .4, linewidth = 0
+  ) +
+  stat_summary(
+    aes(color = term, color = after_scale(prismatic::clr_darken(color, .35))),
+    fun.data = "mean_sdl", fun.args = list(mult = 1),
+    position = position_dodge(width = spacing),
+    size = .2
+  ) +
+  geom_text(
+    data = dat_fig4_out |> slice(1), 
+    aes(color = term, label = out_lab),
+    position = position_nudge(x = .23),
+    hjust = 1, size = 3.9, family = "PT Sans Narrow", show.legend = FALSE
+  ) +
+  facet_nested(
+    method ~ group + lscp,
+    axes = "margins", remove_labels = "x", 
+    scales = "free_y", space = "free_y", switch = "y"
+  ) +
+  scale_y_continuous(position = "right") + #, breaks = -3:3*10
+  scale_color_manual(values = colors) +
+  labs(x = "Sampling interval", y = "Estimate", color = NULL) +
+  theme(
+    strip.text.x = element_markdown(size = rel(.85), vjust = .5, margin = margin(6, 1, 2, 1)),
+    ggh4x.facet.nestline = element_line(colour = "#c6c6c6")
+  )
+
+ggsave(paste0(dir_plots, "/4_sim_est_lscp_ac_hr_zoom.png"), width = 12, height = 8.4, dpi = 600, bg = "white")
+```
+
+
+
+### Figure 5
+
+Mean estimates + shares of significant outcomes levels of autocorrelation, and directionality per method x environmental variable
+
+```{r}
+#| label: fig-5
+#| fig-height: 7.5
+dat_labs <-  
+  dat_est |> 
+  mutate(
+    across(lscp_var1_ac:hr, ~ paste0(cur_column(), " = ", .x), .names = "lab_{col}")
+  )
+
+# Contin.
+dat_fig5 <-
+  bind_rows(
+    dat_est |>
+      # only var 1
+      filter(var1 == 2, var2 == 0, lscp_var2_ac == 1, term == "var1",
+             hr != 0) |>
+      mutate(lscp = as.character(lscp_var1_ac)) |>
+      group_by(by, lscp, method, term) |>
+      summarise(mean = mean(estimate, na.rm = TRUE),
+                p.sig = round(mean(low > 0 & high > 0, na.rm = TRUE), 2),
+                n = n()),
+  
+    # only var 2
+    dat_est |>
+      filter(var1 == 0, var2 == -2, lscp_var1_ac == 1, term == "var2") |>
+      mutate(lscp = as.character(lscp_var2_ac)) |>
+      group_by(by, lscp, method, term) |>
+      summarise(mean = mean(estimate, na.rm = TRUE),
+                p.sig = round(mean(low < 0 & high < 0, na.rm = TRUE), 2),
+                n = n()),
+  
+    # var 1 and var 2 same landscape ac
+    dat_est |>
+      filter(var1 != 0, var2 != 0, lscp_var1_ac == lscp_var2_ac) |>
+      mutate(lscp = paste0("both", lscp_var1_ac)) |>
+      group_by(by, lscp, method, term) |>
+      summarise(mean = mean(estimate, na.rm = TRUE),
+                p.sig = 1 - round(mean(low < 0 & high > 0, na.rm = TRUE), 2),
+                n = n()),
+    # One high and one low
+    dat_est |> filter(var1 != 0, var2 != 0, hr == 0, lscp_var1_ac == 3, lscp_var2_ac == 1) |>
+      mutate(lscp = "var1 high; var2 low") |>
+      group_by(by, lscp, method, term) |>
+      summarise(mean = mean(estimate, na.rm = TRUE),
+                p.sig = 1 - round(mean(low < 0 & high > 0, na.rm = TRUE), 2),
+                n = n()),
+    dat_est |> filter(var1 != 0, var2 != 0, hr == 0, lscp_var1_ac == 1, lscp_var2_ac == 3) |>
+      mutate(lscp = "var1 low; var2 high") |>
+      group_by(by, lscp, method, term) |>
+      summarise(mean = mean(estimate, na.rm = TRUE),
+                p.sig = 1 - round(mean(low < 0 & high > 0, na.rm = TRUE), 2),
+                n = n())
+  ) |> 
+  ungroup() |> 
+  mutate(
+    method = factor(method, labels = c("**iSSA**", "**RSA**", "**wRSA**")),
+    term = if_else(term == "var1", "Elevation", "Habitat"),
+    lscp = factor(lscp, labels = c("low (single)", "intermediate (single)", "high (single)", 
+                                   "low (both)", "intermediate (both)", "high (both)", 
+                                   "Elevation high<br>Habitat low", "Elevation low<br>Habitat high")),
+    lscp_num = as.numeric(fct_rev(lscp)),
+    lscp_num = case_when(lscp_num >= 6 ~ lscp_num + .6, lscp_num < 3 ~ lscp_num - .6, TRUE ~ lscp_num)
+  )
+
+fig5 <- 
+  ggplot(dat_fig5, aes(x = factor(by), y = lscp_num, fill = mean)) + 
+  geom_point(
+    aes(size = 100),
+    fill = "grey94", shape = 21, color = "transparent"
+  ) +
+  geom_point(
+    data = filter(dat_fig5, p.sig >= .005),
+    aes(size = p.sig * 100),
+    shape = 21, color = "transparent"
+  ) +
+  facet_nested(
+    ~ method + term,
+    axes = "margins", remove_labels = "x"
+  ) +
+  coord_fixed() +
+  scale_y_continuous(expand = c(.07, .07), breaks = unique(dat_fig5$lscp_num), labels = levels(dat_fig5$lscp)) +
+  scale_color_manual(values = c("black", "white"), guide = "none") +
+  scale_fill_scico(
+    palette = "romaO", begin = .15, end = .85,
+    midpoint = 0, name = "Mean estimate:", breaks = -4:4*2
+  ) +
+  scale_size_area(
+    max_size = 16, name = "Share of significant outcomes:",
+    guide = "none"
+  )  +
+  labs(x = "Sampling interval", y = NULL) +
+  theme(
+    legend.title.position = "top", legend.title = element_text(hjust = 0),
+    legend.key.width = unit(1, "null"), legend.key.height = unit(.7, "lines"), 
+    panel.spacing.x = unit(.5, "lines"),
+    panel.background = element_rect(fill = "transparent", color = "transparent"),
+    ggh4x.facet.nestline = element_line(colour = "#c6c6c6"),
+    axis.text.y = element_markdown(hjust = 0, size = rel(1.1), family = "PT Sans Narrow")
+  )
+
+fig5
+
+ggsave(paste0(dir_plots, "/_raw/5_sim_est_mean_sign_blank.png"), width = 12, height = 7.5, dpi = 600, bg = "white")
+```
+
+#### Variant with Explicit Labels
+
+```{r}
+#| label: fig-5-suppl
+#| fig-height: 7.5
+fig5 +
+  geom_text(
+    #aes(label = sprintf("%1.2f", p.sig)),
+    aes(label = round(p.sig * 100), color = (mean < -6) | (mean > 5 & p.sig > .05)),
+    family = "PT Mono", size = 2.5, fontface = "bold"
+  )
+```
+
+
+### Figure S1
+
+```{r}
+#| label: s1-maps-elv-hab
+m1 <- image_read(paste0(dir_plots, "/_raw/1_s1_sim_maps_elv_1.png"))
+m2 <- image_read(paste0(dir_plots, "/_raw/1_s1_sim_maps_hab_1.png"))
+
+m <- image_append(c(m1, m2), stack = TRUE)
+m <- image_background(m, "#FFFFFF")
+
+image_write(i, path = paste0(dir_plots, "/s1_sim_maps_elv_hab.png"), format = "png", density = 600)
+```
+
+
+*** 
+  
+<details><summary>Session Info</summary>
+
+```{r}
+#| label: session-info
+devtools::session_info()
+```
+
+</details>
