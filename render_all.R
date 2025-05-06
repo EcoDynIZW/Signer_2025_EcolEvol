@@ -1,5 +1,5 @@
-## SCRIPT TO RUN ALL REPORTS
-## WARNING: LINE 39 REMOVES ALL EXISTING HTML REPORTS!
+## Script to Render All Quarto Documents and Copy the Reports to ./docs/reports/
+## WARNING: LINE 44 REMOVES ALL EXISTING HTML REPORTS!
 
 library(quarto)
 library(fs)
@@ -32,11 +32,18 @@ render_report <- function(input_file, input_dir = src, output_dir = out, ...) {
 ## files to render
 qmds <- list.files(path = src, pattern = ".qmd$")
 
-## render single report
+
+## render single report --------------------------------------------------------
+
 # render_report(qmds[4])
 
-## render all reports
+
+## render all reports ----------------------------------------------------------
+
 ## WARNING: THIS PART REMOVES ALL EXISTING HTML REPORTS!
 unlink(out, recursive = TRUE)
 dir.create(out)
+## WARNING: THIS PART REMOVES ALL EXISTING OUTPUTS!
+#unlink(here("output", "simulated"), recursive = TRUE)
+#unlink(here("output", "empirical"), recursive = TRUE)
 walk(qmds, ~render_report(.x))
