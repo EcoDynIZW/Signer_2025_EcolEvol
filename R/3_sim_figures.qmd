@@ -122,7 +122,8 @@ dat_est <- read_rds(here("output", "simulated", "sim_results_combined.rds"))
 ```{r}
 #| label: plot-params
 #| cache: false
-colors <- c(`Elevation (numeric)` = "#CD9804", `Habitat (categorical)` = "#1B9E77")
+colors <- c(`Elevation (numeric)` = "#CD9804",   `Elevation` = "#CD9804", 
+            `Habitat (categorical)` = "#1B9E77", `Habitat` = "#1B9E77")
 width <- 1.2
 spacing <- .6
 ```
@@ -409,8 +410,7 @@ Estimates across methods and levels of autocorrelation per environmental variabl
 #| fig-height: 8.4
 dat_fig4 <- 
   bind_rows(
-    dat_est |> filter(var1 != 0, var2 != 0, hr != 0,
-                  lscp_var1_ac == lscp_var2_ac) |>
+    dat_est |> filter(var1 != 0, var2 != 0, hr == 0, lscp_var1_ac == lscp_var2_ac) |>
       mutate(lscp = as.character(lscp_var1_ac)),
     dat_est |> filter(var1 != 0, var2 != 0, hr == 0, lscp_var1_ac == 3, lscp_var2_ac == 1) |>
       mutate(lscp = "var1 ↑; var2 ↓"),
@@ -647,6 +647,156 @@ m <- image_append(c(m1, m2), stack = TRUE)
 m <- image_background(m, "#FFFFFF")
 
 image_write(i, path = paste0(dir_plots, "/s1_sim_maps_elv_hab.png"), format = "png", density = 600)
+```
+
+
+### Figure S2
+
+Correlations, missing tracks rds files
+
+
+### Figure S3
+
+```{r}
+#| label: fig-s3
+#| fig-height: 9
+bind_rows(
+    dat_est |> filter(var1 != 0, var2 == 0, hr == 0, lscp_var2_ac == 1) |>
+      mutate(lscp_var_ac = lscp_var1_ac),
+    dat_est |> filter(var1 == 0, var2 != 0, hr == 0, lscp_var1_ac == 1) |>
+      mutate(lscp_var_ac = lscp_var2_ac),
+  ) |>
+  mutate(
+    term = ifelse(term == "var1", "Elevation", "Habitat"),
+    term_lab = ifelse(term == "Elevation", "<b style='color:#CD9804;'>Elevation</b>", "<b style='color:#1B9E77;'>Habitat</b>"),
+    lscp_var_ac = factor(lscp_var_ac, levels = 1:3,
+                         labels = c("low", "intermediate", "high"))) |>
+  ggplot(aes(x = factor(by), y = estimate, color = term)) +
+  stat_summary(fun = mean) +
+  facet_nested(
+    term_lab + method ~ lscp_var_ac,
+    axes = "margins", remove_labels = "x", 
+    scales = "free_y"
+  ) +
+  coord_cartesian(clip = "off") +
+  scale_color_manual(values = colors, guide = "none") +
+  labs(x = "Sampling interval", y = "Estimate") +
+  theme(
+    legend.position = "bottom",
+    strip.text.x = element_markdown(face = "bold"),
+    strip.text.y = element_markdown(face = "bold"),
+    ggh4x.facet.nestline = element_line(colour = "#c6c6c6")
+  )
+
+ggsave(paste0(dir_plots, "/S3_sim_est_single.png"), width = 12, height = 9, dpi = 600, bg = "white")
+```
+
+
+## Figure S4
+
+```{r}
+#| label: fig-s4
+#| fig-height: 9
+bind_rows(
+    dat_est |> filter(var1 != 0, var2 != 0, hr != 0,
+                  lscp_var1_ac == lscp_var2_ac) |>
+      mutate(lscp = as.character(lscp_var1_ac)),
+    dat_est |> filter(var1 != 0, var2 != 0, hr == 0, lscp_var1_ac == 3, lscp_var2_ac == 1) |>
+      mutate(lscp = "Elevation high<br>Habitat low"),
+    dat_est |> filter(var1 != 0, var2 != 0, hr == 0, lscp_var1_ac == 1, lscp_var2_ac == 3) |>
+      mutate(lscp = "Elevation low<br>Habitat high")
+  ) |>
+  mutate(
+    term = ifelse(term == "var1", "Elevation", "Habitat"),
+    term_lab = ifelse(term == "Elevation", "<b style='color:#CD9804;'>Elevation</b>", "<b style='color:#1B9E77;'>Habitat</b>")
+  ) |>
+  ggplot(aes(x = factor(by), y = estimate, color = term)) +
+  stat_summary(fun = mean) +
+  facet_nested(
+    term_lab + method ~ lscp,
+    axes = "margins", remove_labels = "x", 
+    scales = "free_y"
+  ) +
+  coord_cartesian(clip = "off") +
+  scale_color_manual(values = colors, guide = "none") +
+  labs(x = "Sampling interval", y = "Estimate") +
+  theme(
+    legend.position = "bottom",
+    strip.text.x = element_markdown(face = "bold"),
+    strip.text.y = element_markdown(face = "bold"),
+    ggh4x.facet.nestline = element_line(colour = "#c6c6c6")
+  )
+
+ggsave(paste0(dir_plots, "/S4_sim_est_autocorrelation.png"), width = 12, height = 9, dpi = 600, bg = "white")
+```
+
+
+
+### Figure S5
+
+Estimates across methods and levels of autocorrelation per environmental variable for simulations without homing tendency (hr)
+
+```{r}
+#| label: fig-s5
+#| fig-height: 8.4
+dat_figs5 <-  
+  bind_rows(
+    dat_est |> filter(var1 != 0, var2 == 0, hr != 0, lscp_var2_ac == 1) |>
+      mutate(lscp_var_ac = lscp_var1_ac),
+    dat_est |> filter(var1 == 0, var2 != 0, hr != 0, lscp_var1_ac == 1) |>
+      mutate(lscp_var_ac = lscp_var2_ac),
+  ) |>
+  mutate(
+    method = factor(method, labels = c("**iSSA**", "**RSA**", "**wRSA**")),
+    term = if_else(term == "var1", "Elevation (numeric)", "Habitat (categorical)"),
+    lscp_var_ac = factor(lscp_var_ac, levels = 1:3,
+                         labels = c("low", "**Level of autocorrelation**<br>intermediate", "high")))
+
+labs_figs5 <- 
+  dat_figs5 |> 
+  filter(by == 1, method == "**iSSA**", lscp_var_ac == "low") |> 
+  mutate(
+    pos = if_else(term == "Elevation (numeric)", max(estimate), min(estimate)),
+    lab = if_else(term == "Elevation (numeric)", "Elevation", "Habitat"),
+    just = if_else(term == "Elevation (numeric)", -.8, 1.8),
+  ) |> 
+  dplyr::select(by, method, term, lscp_var_ac, pos, just, lab) |> 
+  unique()
+
+ggplot(
+    data = dat_figs5, 
+    aes(x = factor(by), y = estimate)
+  ) +
+  geom_violin(
+    aes(color = term, fill = after_scale(prismatic::clr_lighten(color, .35))), 
+    position = position_dodge(width = spacing), width = width, 
+    bw = .7, linewidth = 0
+  ) +
+  geom_hline(yintercept = 0, color = "#BABABA") +
+  geom_violin(
+    aes(color = term, fill = after_scale(prismatic::clr_lighten(color, .35))), 
+    position = position_dodge(width = spacing), width = width, 
+    bw = .7, alpha = .4, linewidth = 0
+  ) +
+  stat_summary(
+    aes(color = term, color = after_scale(prismatic::clr_darken(color, .35))),
+    fun.data = "mean_sdl", fun.args = list(mult = 1),
+    position = position_dodge(width = spacing),
+    size = .2
+  ) +
+  geom_text(
+    data = labs_figs5, 
+    aes(y = pos, label = lab, vjust = just,
+        color = term),
+    position = position_dodge(width = spacing),
+    family = "PT Sans Narrow", fontface = "bold", size = 5, show.legend = FALSE
+  ) +
+  facet_grid(method ~ lscp_var_ac, scale = "free_y", switch = "y") +
+  scale_y_continuous(position = "right") +
+  scale_color_manual(values = colors) +
+  labs(x = "Sampling interval", y = "Estimate", color = NULL)
+
+ggsave(paste0(dir_plots, "/s5_sim_est_lscp_no_hr.png"), width = 12, height = 7.8, dpi = 600, bg = "white")
 ```
 
 
