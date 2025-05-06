@@ -646,7 +646,7 @@ m2 <- image_read(paste0(dir_plots, "/_raw/1_s1_sim_maps_hab_1.png"))
 m <- image_append(c(m1, m2), stack = TRUE)
 m <- image_background(m, "#FFFFFF")
 
-image_write(i, path = paste0(dir_plots, "/s1_sim_maps_elv_hab.png"), format = "png", density = 600)
+image_write(m, path = paste0(dir_plots, "/s1_sim_maps_elv_hab.png"), format = "png", density = 600)
 ```
 
 
