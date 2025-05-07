@@ -335,7 +335,7 @@ dat_est |>
   filter(estimate > -20) |>
   mutate(sig = fct_rev(ifelse(!(low < 0 & high > 0), "significant", "not significant"))) |>
   ggplot(aes(x = res,  y = estimate, group = id)) +
-  annotate(geom = "rect", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = 0, alpha = .12) +
+  #annotate(geom = "rect", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = 0, alpha = .12) +
   geom_hline(aes(yintercept = 0), color = "grey67") +
   geom_line(
     aes(color = id, color = after_scale(desaturate(lighten(color, .33), .5))),
