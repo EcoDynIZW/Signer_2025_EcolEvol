@@ -306,7 +306,7 @@ dat_est_rsf <- read_rds(paste0(dir_est, "/emp_rsf_est.rds")) |>
   unnest(cols = est) |> mutate(method = "rsf")
 
 dat_est_wrsf <- bind_rows(
-    map(list.files(paste0(dir_est, "/emp_wrsf"), full.names = TRUE), ~
+    map(list.files(paste0(dir_est, "/emp_wrsf_est"), full.names = TRUE), ~
           read_rds(.x) |> mutate(run_id = str_extract(.x, "inst_\\d{1,2}") |> str_extract("\\d{1,2}") |> as.numeric()))
   ) |>
   mutate(term = case_when(term == "habitat" ~ "hab",
