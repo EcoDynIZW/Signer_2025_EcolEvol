@@ -652,7 +652,6 @@ image_write(m, path = paste0(dir_plots, "/s1_sim_maps_elv_hab.png"), format = "p
 
 ### Figure S2
 
-Correlations, missing tracks rds files
 
 ```{r}
 #| label: fig-s2
@@ -737,95 +736,8 @@ ggplot(corr_combined, aes(rowname, fct_rev(colname), fill = corr)) +
     axis.text.y = element_text(hjust = 0),
   )
 
-ps <- vector(mode = "list", length = 10)
-
-for (n in 1:10) {
-
-  ## read landscape
-  e <- read_rds(paste0(dir_lscps, "/landscapes_", n, ".rds"))
-
-  ## read animal locations
-  dat <- read_rds(here("output", "simulated", "data_proc", paste0("tracks_", n, ".rds")))
-
-  ## enough to use only res==1 data, because the others are subsets
-  ## remove duplicate rows (i.e. duplicate locations)
-  dat <- dat %>% filter(res == 1)
-
-  dat <- dat %>%
-    mutate(data_distinct = map(data, ~ {.x %>% distinct(x, y, .keep_all = TRUE)})) %>%
-    dplyr::select(-data) %>%
-    unnest(data_distinct) %>%
-    distinct(x, y, .keep_all = TRUE) %>%
-    dplyr::select(-t, -id)
-
-  dat <- dat %>%
-    mutate(dist_from_cent = sqrt((x - 600.5)^2 + (y-600.5)^2))
-
-  radius <- max(dat$dist_from_cent)
-
-  ## crop raster to a radius of max(dist_from_cent) around HR centre
-  buf <- terra::buffer(rasterize(matrix(c(600.5, 600.5), ncol = 2), e, field = 1), width = radius)
-  e.cut <- trim(mask(e, buf))
-
-  df <- as.data.frame(e.cut, xy = TRUE) %>% as_tibble()
-
-  ## select landscape cells in the inner area of the landscape that was relevant to the simulated tracks
-  # df <- df %>% filter(x > min(dat$x), x < max(dat$x), y > min(dat$y), y < max(dat$y))
-  ## select landscape cells that were used by animals
-  # df <- left_join(dat, df)
-
-  ## compute correlation matrix
-  cors <- df %>%
-    filter(!is.na(dist_hr)) %>%
-    dplyr::select(
-      "Distance to\nHR center" = dist_hr,
-      "Habitat" = habitat,
-      "Distance\nto feature" = dist_feat,
-      "Elevation" = elevation
-    ) %>%
-    corrr::correlate(method = "spearman", diagonal = 1) %>%
-    corrr::shave(upper = FALSE)
-
-  cors <- cors %>%
-    pivot_longer(
-      cols = -term,
-      names_to = "colname",
-      values_to = "corr"
-    ) %>%
-    mutate(
-      rowname = fct_inorder(term),
-      colname = fct_inorder(colname),
-      lab = ifelse(!is.na(corr), sprintf("%1.3f", corr), "")
-    )
-
-  ps[[n]] <-
-    ggplot(cors, aes(rowname, fct_rev(colname), fill = corr)) +
-    geom_tile() +
-    geom_text(
-      aes(label = lab, color = abs(corr) < .75),
-      family = "PT Mono", size = 5
-    ) +
-    coord_fixed(expand = FALSE) +
-    scale_color_manual(values = c("white", "black"), guide = "none") +
-    scale_fill_distiller(
-      palette = "PuOr", na.value = "white",
-      direction = 1, limits = c(-1, 1),
-      name = "Spearman\nCorrelation:"
-    ) +
-    guides(fill = guide_colorbar(barheight = unit(10, "lines"), barwidth = unit(.6, "lines"),
-                                 draw.ulim = FALSE, draw.llim = FALSE)) +
-    labs(x = NULL, y = NULL, title = paste("Landscape", n)) +
-    theme(
-      panel.border = element_rect(color = NA, fill = NA),
-      plot.margin = margin(10, 20, 10, 20),
-      legend.title = element_text(margin = margin(1, 0, 15, 0)),
-      legend.text = element_text(family = "PT Sans Narrow", hjust = 1),
-      axis.text.y = element_text(hjust = 0)
-    )
-}
 
 theme_update(legend.position = "right")
-wrap_plots(ps, guides = "collect") + plot_annotation(theme = theme(plot.margin = margin(rep(-5, 4))))
 
 ggsave(paste0(dir_plots, "/s2_sim_multicollinearity.png"), width = 12, height = 7.5, dpi = 600, bg = "white")
 ```
