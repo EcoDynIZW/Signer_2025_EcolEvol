@@ -326,7 +326,7 @@ dat_est <-
                  labels = c("iSSA", "RSA", "wRSA")),
     c_name = factor(term,
                     levels = c("hab", "imp", "dtw"),
-                    labels = c("Forest<br>habitat", "Impervi-<br>nousness",
+                    labels = c("Forest<br>habitat", "Impervi-<br>ousness",
                                "Distance<br>to water"))
   )
 
