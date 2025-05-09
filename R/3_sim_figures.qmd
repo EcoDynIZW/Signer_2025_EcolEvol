@@ -652,7 +652,6 @@ image_write(m, path = paste0(dir_plots, "/s1_sim_maps_elv_hab.png"), format = "p
 
 ### Figure S2
 
-Correlations, missing tracks rds files
 
 ```{r}
 #| label: fig-s2
