@@ -1,4 +1,4 @@
-# Signer et al. (accepted) *Ecology and Evolution*
+# Signer et al. (accepted) *Ecology and Evolution* 
 
 > "The 4th dimension in animal movement: The effect of temporal resolution and landscape configuration in habitat selection analyses" by Johannes Signer, **Cédric Scherer**, **Viktoriia Radchuk**, **Carolin Scholz**, Florian Jeltsch & **Stephanie Kramer‐Schadt** (accepted) *Ecology and Evolution*
 
